@@ -125,7 +125,7 @@
     <button id="btnSelesai" class="btn">Selesai</button>
   </section>
 
-  <p class="muted" style="text-align:center;font-size:.75rem;margin-top:18px">Versi halaman: v6 (diagnosis error)</p>
+  <p class="muted" style="text-align:center;font-size:.75rem;margin-top:18px">Versi halaman: v7 (simpan lewat GET)</p>
 </main>
 
 <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js"></script>
@@ -428,7 +428,7 @@
       ]);
     }
     setMsg('sesiMsg', 'Menyimpan kehadiran…');
-    var r = await kirim(data);
+    var r = await ambil(Object.assign({}, data, { _t: Date.now() }));   // lewat GET (jalur yang terbukti jalan)
     if (!r.ok) { setMsg('sesiMsg', pesan(r, 'Gagal menyimpan.'), 'err'); $('btnKonfirmasi').disabled = false; return; }
     hasil('Kehadiran tercatat', r.pesan || '', 'ok', [
       ['Nama', state.user.nama], ['Kegiatan', sesi.kegiatan],
