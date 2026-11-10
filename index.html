@@ -83,6 +83,7 @@
       <div class="guide"></div>
     </div>
     <p id="scanMsg" class="msg" role="status" aria-live="polite"></p>
+    <p id="scanInfo" class="muted" style="margin:0 0 8px;font-size:.8rem"></p>
     <button id="btnRetry" class="btn" hidden>Coba lagi</button>
     <button id="btnBatal" class="btn ghost">Batal</button>
     <details style="margin-top:8px">
@@ -140,7 +141,7 @@
   var video = $('video');
   var canvas = document.createElement('canvas');
   var ctx = canvas.getContext('2d', { willReadFrequently: true });
-  var stream = null, rafId = 0, running = false, lastTick = 0;
+  var stream = null, rafId = 0, running = false, lastTick = 0, detector = null, sibuk = false;
   var state = { peran: '', token: '', user: null, sesi: [] };
 
   var ua = navigator.userAgent || '';
@@ -260,25 +261,48 @@
       stream = await bukaStream();
       video.setAttribute('playsinline', ''); video.muted = true; video.srcObject = stream;
       await video.play();
-      running = true; lastTick = 0;
-      setMsg('scanMsg', 'Arahkan kamera ke QR code kamu.');
+      detector = null;
+      if ('BarcodeDetector' in window) {
+        try { detector = new BarcodeDetector({ formats: ['qr_code'] }); } catch (e) { detector = null; }
+      }
+      try {
+        var tr = stream.getVideoTracks()[0];
+        var cap = tr.getCapabilities ? tr.getCapabilities() : {};
+        if (cap.focusMode && cap.focusMode.indexOf('continuous') >= 0) await tr.applyConstraints({ advanced: [{ focusMode: 'continuous' }] });
+      } catch (e) {}
+      $('scanInfo').textContent = 'Kamera ' + video.videoWidth + '×' + video.videoHeight + ' · pemindai ' + (detector ? 'bawaan browser + jsQR' : 'jsQR');
+      running = true; lastTick = 0; sibuk = false;
+      setMsg('scanMsg', 'Arahkan kamera ke QR code kamu. Jarak sekitar 20 cm, layar QR dibuat terang.');
       rafId = requestAnimationFrame(tick);
     } catch (e) { stopKamera(); gagalScan(pesanKamera(e)); }
   }
   function tick(ts) {
     if (!running) return;
     rafId = requestAnimationFrame(tick);
-    if (ts - lastTick < 100) return;
+    if (ts - lastTick < 100 || sibuk) return;
     lastTick = ts;
     if (video.readyState < 2 || !video.videoWidth) return;
-    var sc = Math.min(1, 640 / video.videoWidth);
+    sibuk = true;
+    baca().then(
+      function (teks) { sibuk = false; if (teks && running) onKode(teks); },
+      function () { sibuk = false; }
+    );
+  }
+  async function baca() {
+    if (detector) {
+      try {
+        var hasil = await detector.detect(video);
+        if (hasil.length && hasil[0].rawValue) return hasil[0].rawValue;
+      } catch (e) { detector = null; }   // kalau gagal, lanjut pakai jsQR
+    }
+    var sc = Math.min(1, 1280 / video.videoWidth);
     var w = Math.round(video.videoWidth * sc), h = Math.round(video.videoHeight * sc);
     if (canvas.width !== w) canvas.width = w;
     if (canvas.height !== h) canvas.height = h;
     ctx.drawImage(video, 0, 0, w, h);
     var img = ctx.getImageData(0, 0, w, h);
-    var code = jsQR(img.data, w, h, { inversionAttempts: 'dontInvert' });
-    if (code && code.data) onKode(code.data);
+    var code = jsQR(img.data, w, h, { inversionAttempts: 'attemptBoth' });
+    return code && code.data ? code.data : '';
   }
 
   // ====== SETELAH QR TERBACA ======
