@@ -125,7 +125,7 @@
     <button id="btnSelesai" class="btn">Selesai</button>
   </section>
 
-  <p class="muted" style="text-align:center;font-size:.75rem;margin-top:18px">Versi halaman: v7 (simpan lewat GET)</p>
+  <p class="muted" style="text-align:center;font-size:.75rem;margin-top:18px">Versi halaman: v8 (pengecekan balasan)</p>
 </main>
 
 <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js"></script>
@@ -325,10 +325,12 @@
     setMsg('scanMsg', 'QR terbaca. Memeriksa data…');
     $('btnRetry').hidden = true;
     var r = await ambil({ action: 'identitas', peran: state.peran, token: teks });
+    if (r.ok && !r.nama) r = { ok: false, error: 'Balasan server tidak lengkap. Kemungkinan backend belum versi terbaru.', teknis: 'balasan: ' + JSON.stringify(r).slice(0, 140) };
     if (!r.ok) return gagalScan(pesan(r, 'QR tidak dikenali.'));
     state.token = teks; state.user = r;
     setMsg('scanMsg', 'Halo, ' + r.nama + '. Memuat jadwal hari ini…', 'ok');
     var s = await ambil({ action: 'sesi' });
+    if (s.ok && !Array.isArray(s.sesi)) s = { ok: false, error: 'Balasan server tidak lengkap. Kemungkinan backend belum versi terbaru.', teknis: 'balasan: ' + JSON.stringify(s).slice(0, 140) };
     if (!s.ok) return gagalScan(pesan(s, 'Gagal memuat jadwal.'));
     state.sesi = s.sesi || [];
     tampilSesi();
@@ -429,6 +431,10 @@
     }
     setMsg('sesiMsg', 'Menyimpan kehadiran…');
     var r = await ambil(Object.assign({}, data, { _t: Date.now() }));   // lewat GET (jalur yang terbukti jalan)
+    if (r.ok && !r.status) {
+      r = { ok: false, error: 'Balasan server tidak lengkap, absen BELUM tersimpan. Kemungkinan backend belum diterbitkan versi terbarunya (v4).',
+            teknis: 'balasan: ' + JSON.stringify(r).slice(0, 140) };
+    }
     if (!r.ok) { setMsg('sesiMsg', pesan(r, 'Gagal menyimpan.'), 'err'); $('btnKonfirmasi').disabled = false; return; }
     hasil('Kehadiran tercatat', r.pesan || '', 'ok', [
       ['Nama', state.user.nama], ['Kegiatan', sesi.kegiatan],
