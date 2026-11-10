@@ -126,7 +126,26 @@
   </section>
 </main>
 
-<script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js"></script>
+<!-- ▼▼ PERUBAHAN #1: jsQR tidak lagi hanya dari CDN.
+     Baris lama: <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js"></script>
+     Sekarang: halaman mencoba memuat jsQR.js yang ditaruh SEBELUMNYA di folder yang sama
+     dengan index.html (rekomendasi: upload file jsQR.js ke repo GitHub Pages-mu).
+     Kalau file lokal tidak ada, baru fallback ke CDN. Menulis skrip pemindai dari server
+     sendiri mencegah risiko CDN disusupi (supply-chain). -->
+<script>
+(function () {
+  'use strict';
+  var sumber = ['jsQR.js', 'https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js'];
+  function coba(i) {
+    if (i >= sumber.length) return; // keduanya gagal -> pesan saat scan: "Pemindai QR gagal dimuat"
+    var s = document.createElement('script');
+    s.src = sumber[i];
+    s.onerror = function () { coba(i + 1); };
+    document.head.appendChild(s);
+  }
+  coba(0);
+})();
+</script>
 <script>
 (function () {
   'use strict';
@@ -209,7 +228,14 @@
       return { ok: false, error: 'Tidak bisa terhubung ke server. Periksa internet lalu coba lagi.' };
     } finally { clearTimeout(t); }
   }
-  function ambil(params) { return panggil({ url: API + '?' + new URLSearchParams(params).toString() }); }
+  // ▼▼ PERUBAHAN #2: cache-buster — parameter _ dibuat unik tiap permintaan supaya
+  //    Apps Script / proxy tidak menyajikan jawaban lama dari cache.
+  //    Penting untuk action=sesi: admin membuka sesi baru, siswa harus langsung melihatnya.
+  //    Baris lama: function ambil(params) { return panggil({ url: API + '?' + new URLSearchParams(params).toString() }); }
+  function ambil(params) {
+    params._ = Date.now();
+    return panggil({ url: API + '?' + new URLSearchParams(params).toString() });
+  }
   function kirim(data) {
     return panggil({ url: API, init: { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify(data) } });
   }
