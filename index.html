@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Tes Kamera – Abdi Academy</title>
+<title>Absensi – Abdi Academy</title>
 <style>
   :root {
     --bg: #f4f6fb; --card: #ffffff; --text: #1b2430; --muted: #5b6676;
@@ -20,78 +20,108 @@
   }
   * { box-sizing: border-box; }
   body { margin: 0; font-family: Arial, Helvetica, sans-serif; background: var(--bg); color: var(--text); }
-  main { max-width: 480px; margin: 0 auto; padding: 20px 16px 40px; }
-  h1 { font-size: 1.4rem; margin: 8px 0 2px; }
-  .sub { margin: 0 0 16px; color: var(--muted); font-size: .9rem; }
+  main { max-width: 480px; margin: 0 auto; padding: 16px 16px 40px; }
+  .top { text-align: center; padding: 8px 0 14px; }
+  .brand { font-size: 1.3rem; font-weight: bold; }
+  .tgl { color: var(--muted); font-size: .9rem; margin-top: 2px; }
+  .jam { font-size: 1.8rem; font-weight: bold; letter-spacing: 1px; font-variant-numeric: tabular-nums; }
+  .badge { display: inline-block; margin-top: 6px; padding: 3px 10px; border-radius: 99px; background: var(--warn-bg); color: var(--warn-text); font-size: .78rem; font-weight: bold; }
   .card { background: var(--card); border: 1px solid var(--border); border-radius: 14px; padding: 16px; margin-bottom: 14px; }
   .btn { display: block; width: 100%; padding: 16px; margin: 8px 0; border: 0; border-radius: 12px;
          font-size: 1.05rem; font-weight: bold; background: var(--primary); color: var(--primary-text); cursor: pointer; }
   .btn.alt { background: var(--accent); }
   .btn.ghost { background: transparent; color: var(--text); border: 1px solid var(--border); font-weight: normal; }
+  .btn:disabled { opacity: .45; cursor: not-allowed; }
   .warn { background: var(--warn-bg); color: var(--warn-text); border-radius: 12px; padding: 12px 14px; margin-bottom: 14px; font-size: .92rem; line-height: 1.4; }
   .warn p { margin: 4px 0; }
   .frame { position: relative; width: 100%; aspect-ratio: 1 / 1; background: #000; border-radius: 14px; overflow: hidden; }
   .frame video { width: 100%; height: 100%; object-fit: cover; display: block; }
   .guide { position: absolute; inset: 15%; border: 3px solid rgba(255,255,255,.85); border-radius: 12px; pointer-events: none; }
-  #status { min-height: 2.6em; margin: 12px 0 4px; line-height: 1.4; }
-  #status.err { color: var(--err); font-weight: bold; }
-  .result-label { color: var(--muted); font-size: .85rem; margin: 10px 0 2px; }
-  .result-value { font-size: 1.1rem; font-weight: bold; word-break: break-all; color: var(--ok); }
-  details { margin-top: 6px; }
-  summary { cursor: pointer; color: var(--accent); padding: 6px 0; }
-  input[type=text] { width: 100%; padding: 12px; border-radius: 10px; border: 1px solid var(--border);
-                     background: var(--bg); color: var(--text); font-size: 1rem; margin: 8px 0; }
-  pre { white-space: pre-wrap; word-break: break-word; font-size: .8rem; background: var(--bg); padding: 10px; border-radius: 10px; margin: 6px 0 0; }
+  .msg { min-height: 2.6em; margin: 12px 0 4px; line-height: 1.4; }
+  .msg.err { color: var(--err); font-weight: bold; }
+  .msg.ok { color: var(--ok); font-weight: bold; }
+  h2 { font-size: 1.15rem; margin: 0 0 4px; }
+  .muted { color: var(--muted); font-size: .9rem; }
+  .opt { display: flex; gap: 10px; align-items: flex-start; padding: 12px; margin: 8px 0; border: 1px solid var(--border); border-radius: 12px; cursor: pointer; }
+  .opt input { margin-top: 4px; width: 20px; height: 20px; flex: none; }
+  .opt .t { font-weight: bold; }
+  .opt .d { color: var(--muted); font-size: .88rem; margin-top: 2px; line-height: 1.35; }
+  label.f { display: block; margin: 12px 0 4px; font-weight: bold; font-size: .95rem; }
+  select, input[type=text], textarea { width: 100%; padding: 12px; border-radius: 10px; border: 1px solid var(--border);
+         background: var(--bg); color: var(--text); font-size: 1rem; font-family: inherit; }
+  textarea { min-height: 84px; resize: vertical; }
+  .row { display: flex; justify-content: space-between; gap: 12px; padding: 7px 0; border-bottom: 1px solid var(--border); font-size: .95rem; }
+  .row:last-child { border-bottom: 0; }
+  .row span:first-child { color: var(--muted); }
+  .row span:last-child { font-weight: bold; text-align: right; word-break: break-word; }
   [hidden] { display: none !important; }
 </style>
 </head>
 <body>
 <main>
-  <h1>Tes Kamera Absensi</h1>
-  <p class="sub">Abdi Academy · halaman uji coba pemindai QR</p>
+  <header class="top">
+    <div class="brand">Abdi Academy</div>
+    <div id="tgl" class="tgl">&nbsp;</div>
+    <div id="jam" class="jam">--:--:--</div>
+    <div id="badgeUji" class="badge" hidden>MODE UJI: absen belum disimpan</div>
+  </header>
 
   <div id="warn" class="warn" hidden></div>
 
-  <section id="pilih" class="card">
-    <p style="margin-top:0">Pilih peran. Kamera akan langsung menyala:</p>
-    <button class="btn" data-role="Siswa">Saya Siswa</button>
-    <button class="btn alt" data-role="Pengajar / Pelatih">Saya Pengajar / Pelatih</button>
+  <!-- 1. Pilih peran -->
+  <section id="s-pilih" class="card layar">
+    <h2>Absensi</h2>
+    <p class="muted" style="margin-top:0">Pilih peran, kamera akan langsung menyala untuk memindai QR kamu.</p>
+    <button class="btn" data-peran="siswa">Saya Siswa</button>
+    <button class="btn alt" data-peran="pengajar">Saya Pengajar / Pelatih</button>
   </section>
 
-  <section id="scanner" class="card" hidden>
+  <!-- 2. Scan -->
+  <section id="s-scan" class="card layar" hidden>
     <div class="frame">
       <video id="video" playsinline muted autoplay></video>
       <div class="guide"></div>
     </div>
-    <p id="status" role="status" aria-live="polite"></p>
-    <button id="retry" class="btn" hidden>Coba lagi</button>
-    <button id="cancel" class="btn ghost">Batal</button>
+    <p id="scanMsg" class="msg" role="status" aria-live="polite"></p>
+    <button id="btnRetry" class="btn" hidden>Coba lagi</button>
+    <button id="btnBatal" class="btn ghost">Batal</button>
+    <details style="margin-top:8px">
+      <summary class="muted" style="cursor:pointer">Kamera tidak bisa? Masukkan kode manual</summary>
+      <input id="kodeManual" type="text" placeholder="Tempel isi QR di sini" autocomplete="off" style="margin-top:8px">
+      <button id="btnManual" class="btn ghost">Kirim kode</button>
+    </details>
   </section>
 
-  <section id="hasil" class="card" hidden>
-    <strong>Berhasil terbaca</strong>
-    <p class="result-label">Isi kode</p>
-    <div id="resKode" class="result-value"></div>
-    <p class="result-label">Peran</p>
-    <div id="resPeran"></div>
-    <p class="result-label">Cara</p>
-    <div id="resCara"></div>
-    <p class="result-label">Waktu (WIB)</p>
-    <div id="resWaktu"></div>
-    <button id="again" class="btn">Scan lagi</button>
-    <button id="back" class="btn ghost">Ganti peran</button>
+  <!-- 3. Pilih sesi & konfirmasi -->
+  <section id="s-sesi" class="card layar" hidden>
+    <h2 id="sapaan"></h2>
+    <p id="peranInfo" class="muted" style="margin-top:0"></p>
+
+    <div id="kosong" class="warn" hidden>Belum ada sesi yang dibuka hari ini. Hubungi admin untuk membuka sesi.</div>
+
+    <div id="formSesi">
+      <div id="boxSiswa">
+        <label class="f">Pilih jadwal hari ini</label>
+        <div id="daftarSesi"></div>
+      </div>
+      <div id="boxPengajar" hidden>
+        <label class="f" for="pilihSesi">Pilih jadwal hari ini</label>
+        <select id="pilihSesi"></select>
+        <label class="f" for="materi">Materi yang akan diajarkan hari ini</label>
+        <textarea id="materi" maxlength="200" placeholder="Contoh: Trigonometri dasar, latihan soal 1-10"></textarea>
+      </div>
+      <p id="sesiMsg" class="msg" role="status" aria-live="polite"></p>
+      <button id="btnKonfirmasi" class="btn" disabled>Konfirmasi Kehadiran</button>
+    </div>
+    <button id="btnGanti" class="btn ghost">Bukan saya / scan ulang</button>
   </section>
 
-  <section class="card">
-    <details>
-      <summary>Kamera tidak bisa? Masukkan kode manual</summary>
-      <input id="manualInput" type="text" placeholder="Ketik isi kode di sini" autocomplete="off">
-      <button id="manualBtn" class="btn ghost">Kirim kode</button>
-    </details>
-    <details>
-      <summary>Info teknis (untuk pengecekan)</summary>
-      <pre id="diag">Memeriksa…</pre>
-    </details>
+  <!-- 4. Hasil -->
+  <section id="s-hasil" class="card layar" hidden>
+    <h2 id="hasilJudul"></h2>
+    <p id="hasilPesan" class="msg"></p>
+    <div id="hasilBaris"></div>
+    <button id="btnSelesai" class="btn">Selesai</button>
   </section>
 </main>
 
@@ -100,37 +130,91 @@
 (function () {
   'use strict';
 
+  // ====== PENGATURAN HALAMAN ======
+  var API = 'https://script.google.com/macros/s/AKfycbwEuOzrhmdlVv0869D9IGO1LZpAxi047z-UqMJYQm-mTT0IA97uz-CMcNNsGxLnkHig/exec';
+  var MODE_UJI = true;   // true = absen BELUM disimpan ke sheet (untuk tes). Ubah ke false saat backend simpan sudah aktif.
+  var ZONA = 'Asia/Jakarta';
+  // ================================
+
   var $ = function (id) { return document.getElementById(id); };
   var video = $('video');
-  var statusEl = $('status');
   var canvas = document.createElement('canvas');
   var ctx = canvas.getContext('2d', { willReadFrequently: true });
-  var stream = null, rafId = 0, running = false, lastTick = 0, role = '';
+  var stream = null, rafId = 0, running = false, lastTick = 0;
+  var state = { peran: '', token: '', user: null, sesi: [] };
 
   var ua = navigator.userAgent || '';
   var inApp = /FBAN|FBAV|FB_IAB|Instagram|Line\/|MicroMessenger|TikTok|Snapchat|Twitter|WhatsApp|; wv\)/i.test(ua);
   var inFrame = (function () { try { return window.self !== window.top; } catch (e) { return true; } })();
-  var hasApi = !!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia);
+  var hasCam = !!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia);
 
-  function show(id, on) { $(id).hidden = !on; }
-  function setStatus(msg, isErr) { statusEl.textContent = msg; statusEl.className = isErr ? 'err' : ''; }
+  function el(tag, text, cls) {
+    var n = document.createElement(tag);
+    if (text != null) n.textContent = text;
+    if (cls) n.className = cls;
+    return n;
+  }
+  function layar(nama) {
+    Array.prototype.forEach.call(document.querySelectorAll('.layar'), function (s) { s.hidden = true; });
+    $('s-' + nama).hidden = false;
+    window.scrollTo(0, 0);
+  }
+  function setMsg(id, teks, tipe) { var m = $(id); m.textContent = teks || ''; m.className = 'msg' + (tipe ? ' ' + tipe : ''); }
+
+  // ---- Jam & tanggal (WIB) ----
+  function tickJam() {
+    var d = new Date();
+    $('jam').textContent = d.toLocaleTimeString('en-GB', { timeZone: ZONA, hour12: false });
+    $('tgl').textContent = d.toLocaleDateString('id-ID', { timeZone: ZONA, weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+  }
+  tickJam(); setInterval(tickJam, 1000);
+  $('badgeUji').hidden = !MODE_UJI;
 
   // ---- Peringatan awal ----
   (function () {
     var list = [];
-    if (!window.isSecureContext) list.push('Halaman ini tidak memakai HTTPS, jadi browser akan memblokir kamera.');
-    if (inFrame) list.push('Halaman ini terbuka di dalam frame. Browser bisa memblokir kamera. Buka alamatnya langsung di Chrome atau Safari.');
+    if (!window.isSecureContext) list.push('Halaman ini tidak memakai HTTPS, jadi kamera dan lokasi akan diblokir.');
+    if (inFrame) list.push('Halaman ini terbuka di dalam frame. Buka alamatnya langsung di Chrome atau Safari.');
     if (inApp) list.push('Kamu membuka lewat browser di dalam aplikasi (misalnya WhatsApp atau Instagram). Kamera sering diblokir di sini. Salin link, lalu buka lewat Chrome atau Safari.');
-    if (!hasApi) list.push('Browser ini tidak mendukung akses kamera. Coba perbarui browser atau pakai Chrome/Safari.');
+    if (!hasCam) list.push('Browser ini tidak mendukung kamera. Coba perbarui browser atau pakai Chrome/Safari.');
     if (list.length) {
-      var box = $('warn');
-      list.forEach(function (t) { var p = document.createElement('p'); p.textContent = t; box.appendChild(p); });
-      box.hidden = false;
+      list.forEach(function (t) { $('warn').appendChild(el('p', t)); });
+      $('warn').hidden = false;
     }
   })();
 
-  // ---- Pesan error yang mudah dipahami ----
-  function explainError(e) {
+  // ---- ID perangkat (untuk catatan di sheet) ----
+  function deviceId() {
+    try {
+      var k = 'abdi_device_id', v = localStorage.getItem(k);
+      if (!v) {
+        v = (window.crypto && crypto.randomUUID) ? crypto.randomUUID().replace(/-/g, '')
+          : (Date.now().toString(36) + Math.random().toString(36).slice(2, 12));
+        localStorage.setItem(k, v);
+      }
+      return v;
+    } catch (e) { return 'tanpa-id'; }
+  }
+
+  // ---- Panggilan ke server (Apps Script) ----
+  async function panggil(opsi) {
+    var ctrl = new AbortController();
+    var t = setTimeout(function () { ctrl.abort(); }, 20000);
+    try {
+      var r = await fetch(opsi.url, Object.assign({ signal: ctrl.signal }, opsi.init || {}));
+      if (!r.ok) throw new Error('HTTP ' + r.status);
+      return await r.json();
+    } catch (e) {
+      return { ok: false, error: 'Tidak bisa terhubung ke server. Periksa internet lalu coba lagi.' };
+    } finally { clearTimeout(t); }
+  }
+  function ambil(params) { return panggil({ url: API + '?' + new URLSearchParams(params).toString() }); }
+  function kirim(data) {
+    return panggil({ url: API, init: { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify(data) } });
+  }
+
+  // ====== KAMERA ======
+  function pesanKamera(e) {
     var n = (e && e.name) || '';
     if (n === 'NotAllowedError' || n === 'PermissionDeniedError')
       return 'Izin kamera ditolak. Ketuk ikon gembok atau pengaturan di kolom alamat, ubah Kamera menjadi Izinkan, lalu muat ulang halaman.';
@@ -142,14 +226,7 @@
       return 'Browser memblokir kamera di halaman ini. Pastikan alamat diawali https:// dan buka lewat Chrome atau Safari.';
     return 'Kamera gagal dibuka (' + (n || 'error tidak dikenal') + ').';
   }
-
-  function fail(msg) {
-    setStatus(msg, true);
-    show('retry', true);
-  }
-
-  // ---- Buka kamera: coba beberapa pengaturan, dari yang ideal ke yang paling longgar ----
-  async function openStream() {
+  async function bukaStream() {
     var tries = [
       { video: { facingMode: { ideal: 'environment' }, width: { ideal: 1280 }, height: { ideal: 720 } }, audio: false },
       { video: { facingMode: 'environment' }, audio: false },
@@ -158,124 +235,201 @@
     var lastErr;
     for (var i = 0; i < tries.length; i++) {
       try { return await navigator.mediaDevices.getUserMedia(tries[i]); }
-      catch (e) {
-        lastErr = e;
-        if (e.name === 'NotAllowedError' || e.name === 'SecurityError' || e.name === 'NotReadableError') break;
-      }
+      catch (e) { lastErr = e; if (e.name === 'NotAllowedError' || e.name === 'SecurityError' || e.name === 'NotReadableError') break; }
     }
     throw lastErr;
   }
-
-  function stop() {
+  function stopKamera() {
     running = false;
     if (rafId) cancelAnimationFrame(rafId);
     rafId = 0;
     if (stream) { stream.getTracks().forEach(function (t) { t.stop(); }); stream = null; }
     video.srcObject = null;
   }
+  function gagalScan(teks) { setMsg('scanMsg', teks, 'err'); $('btnRetry').hidden = false; }
 
-  async function start(selectedRole) {
-    stop();
-    role = selectedRole || role;
-    show('pilih', false); show('hasil', false); show('scanner', true); show('retry', false);
-    setStatus('Meminta izin kamera… ketuk Izinkan bila muncul pertanyaan.');
-
-    if (!window.isSecureContext) { fail('Halaman harus dibuka lewat HTTPS agar kamera bisa dipakai.'); return; }
-    if (!hasApi) { fail('Browser ini tidak mendukung akses kamera.'); return; }
-    if (typeof jsQR !== 'function') { fail('Pemindai QR gagal dimuat. Periksa koneksi internet, lalu muat ulang halaman.'); return; }
-
+  async function mulaiScan(peran) {
+    stopKamera();
+    if (peran) state.peran = peran;
+    layar('scan'); $('btnRetry').hidden = true;
+    setMsg('scanMsg', 'Meminta izin kamera… ketuk Izinkan bila muncul pertanyaan.');
+    if (!window.isSecureContext) return gagalScan('Halaman harus dibuka lewat HTTPS agar kamera bisa dipakai.');
+    if (!hasCam) return gagalScan('Browser ini tidak mendukung kamera. Gunakan kode manual di bawah.');
+    if (typeof jsQR !== 'function') return gagalScan('Pemindai QR gagal dimuat. Periksa internet, lalu muat ulang halaman.');
     try {
-      stream = await openStream();
-      video.setAttribute('playsinline', '');
-      video.muted = true;
-      video.srcObject = stream;
+      stream = await bukaStream();
+      video.setAttribute('playsinline', ''); video.muted = true; video.srcObject = stream;
       await video.play();
-      running = true;
-      lastTick = 0;
-      setStatus('Arahkan kamera ke QR code.');
+      running = true; lastTick = 0;
+      setMsg('scanMsg', 'Arahkan kamera ke QR code kamu.');
       rafId = requestAnimationFrame(tick);
-    } catch (e) {
-      stop();
-      fail(explainError(e));
-    }
+    } catch (e) { stopKamera(); gagalScan(pesanKamera(e)); }
   }
-
-  // ---- Baca frame kamera sekitar 10x per detik ----
   function tick(ts) {
     if (!running) return;
     rafId = requestAnimationFrame(tick);
     if (ts - lastTick < 100) return;
     lastTick = ts;
     if (video.readyState < 2 || !video.videoWidth) return;
-
-    var scale = Math.min(1, 640 / video.videoWidth);
-    var w = Math.round(video.videoWidth * scale);
-    var h = Math.round(video.videoHeight * scale);
+    var sc = Math.min(1, 640 / video.videoWidth);
+    var w = Math.round(video.videoWidth * sc), h = Math.round(video.videoHeight * sc);
     if (canvas.width !== w) canvas.width = w;
     if (canvas.height !== h) canvas.height = h;
     ctx.drawImage(video, 0, 0, w, h);
-
     var img = ctx.getImageData(0, 0, w, h);
     var code = jsQR(img.data, w, h, { inversionAttempts: 'dontInvert' });
-    if (code && code.data) onResult(code.data, 'Kamera');
+    if (code && code.data) onKode(code.data);
   }
 
-  function onResult(text, how) {
-    stop();
+  // ====== SETELAH QR TERBACA ======
+  async function onKode(teks) {
+    stopKamera();
     if (navigator.vibrate) { try { navigator.vibrate(120); } catch (e) {} }
-    $('resKode').textContent = text;
-    $('resPeran').textContent = role || '(belum memilih peran)';
-    $('resCara').textContent = how;
-    $('resWaktu').textContent = new Date().toLocaleString('id-ID', { timeZone: 'Asia/Jakarta', dateStyle: 'full', timeStyle: 'medium' });
-    show('scanner', false); show('pilih', false); show('hasil', true);
+    teks = String(teks || '').trim();
+    if (!teks || teks.length > 200) return gagalScan('Isi QR tidak valid. Coba scan lagi.');
+    setMsg('scanMsg', 'QR terbaca. Memeriksa data…');
+    $('btnRetry').hidden = true;
+    var r = await ambil({ action: 'identitas', peran: state.peran, token: teks });
+    if (!r.ok) return gagalScan(r.error || 'QR tidak dikenali.');
+    state.token = teks; state.user = r;
+    setMsg('scanMsg', 'Halo, ' + r.nama + '. Memuat jadwal hari ini…', 'ok');
+    var s = await ambil({ action: 'sesi' });
+    if (!s.ok) return gagalScan(s.error || 'Gagal memuat jadwal.');
+    state.sesi = s.sesi || [];
+    tampilSesi();
   }
 
-  // ---- Tombol-tombol ----
-  Array.prototype.forEach.call(document.querySelectorAll('[data-role]'), function (b) {
-    b.addEventListener('click', function () { start(b.getAttribute('data-role')); });   // ketukan = izin memulai kamera
-  });
-  $('retry').addEventListener('click', function () { start(); });
-  $('again').addEventListener('click', function () { start(); });
-  $('cancel').addEventListener('click', function () { stop(); show('scanner', false); show('pilih', true); });
-  $('back').addEventListener('click', function () { stop(); show('hasil', false); show('pilih', true); });
-  $('manualBtn').addEventListener('click', function () {
-    var v = $('manualInput').value.trim();
-    if (v) onResult(v, 'Input manual');
-  });
-
-  // Matikan kamera kalau halaman disembunyikan (pindah tab / layar dikunci)
-  document.addEventListener('visibilitychange', function () {
-    if (document.hidden && running) {
-      stop();
-      fail('Kamera dimatikan karena halaman ditinggalkan. Ketuk Coba lagi untuk menyalakan.');
+  // ====== PILIH SESI ======
+  function infoSesi(s) {
+    var a = s.mulai + (s.selesai ? '–' + s.selesai : '') + (s.lokasi ? ' · ' + s.lokasi : '');
+    return s.dresscode ? a + ' · Dresscode: ' + s.dresscode : a;
+  }
+  function sesiTerpilih() {
+    if (state.peran === 'siswa') {
+      var c = document.querySelector('input[name=sesi]:checked');
+      return c ? c.value : '';
     }
-  });
-  window.addEventListener('pagehide', stop);
-
-  // ---- Info teknis ----
-  (async function () {
-    var lines = [];
-    function yn(b) { return b ? 'ya' : 'tidak'; }
-    lines.push('HTTPS / konteks aman : ' + yn(window.isSecureContext));
-    lines.push('Di dalam frame       : ' + yn(inFrame));
-    lines.push('Browser dalam aplikasi: ' + yn(inApp));
-    lines.push('API kamera tersedia  : ' + yn(hasApi));
-    lines.push('Pemindai QR dimuat   : ' + yn(typeof jsQR === 'function'));
-    try {
-      if (navigator.permissions && navigator.permissions.query) {
-        var p = await navigator.permissions.query({ name: 'camera' });
-        lines.push('Status izin kamera   : ' + p.state);
-      } else { lines.push('Status izin kamera   : tidak bisa dicek di browser ini'); }
-    } catch (e) { lines.push('Status izin kamera   : tidak bisa dicek di browser ini'); }
-    try {
-      if (hasApi && navigator.mediaDevices.enumerateDevices) {
-        var d = await navigator.mediaDevices.enumerateDevices();
-        lines.push('Jumlah kamera        : ' + d.filter(function (x) { return x.kind === 'videoinput'; }).length);
+    return $('pilihSesi').value;
+  }
+  function cekSiap() {
+    var ok = !!sesiTerpilih();
+    if (state.peran === 'pengajar') ok = ok && $('materi').value.trim().length >= 3;
+    $('btnKonfirmasi').disabled = !ok;
+  }
+  function tampilSesi() {
+    layar('sesi');
+    var siswa = state.peran === 'siswa';
+    $('sapaan').textContent = 'Halo, ' + state.user.nama;
+    $('peranInfo').textContent = siswa ? 'Siswa' : 'Pengajar / Pelatih';
+    setMsg('sesiMsg', '');
+    $('boxSiswa').hidden = !siswa; $('boxPengajar').hidden = siswa;
+    var ada = state.sesi.length > 0;
+    $('kosong').hidden = ada; $('formSesi').hidden = !ada;
+    $('materi').value = '';
+    var daftar = $('daftarSesi'); daftar.textContent = '';
+    var pilih = $('pilihSesi'); pilih.textContent = '';
+    state.sesi.forEach(function (s, i) {
+      if (siswa) {
+        var lab = el('label', null, 'opt');
+        var inp = document.createElement('input');
+        inp.type = 'radio'; inp.name = 'sesi'; inp.value = s.idSesi;
+        if (state.sesi.length === 1 && i === 0) inp.checked = true;
+        inp.addEventListener('change', cekSiap);
+        var box = el('div');
+        box.appendChild(el('div', s.kegiatan, 't'));
+        box.appendChild(el('div', infoSesi(s), 'd'));
+        lab.appendChild(inp); lab.appendChild(box); daftar.appendChild(lab);
+      } else {
+        var o = document.createElement('option');
+        o.value = s.idSesi; o.textContent = s.kegiatan + ' (' + s.mulai + (s.selesai ? '–' + s.selesai : '') + ')';
+        pilih.appendChild(o);
       }
-    } catch (e) {}
-    lines.push('Browser              : ' + ua);
-    $('diag').textContent = lines.join('\n');
-  })();
+    });
+    cekSiap();
+  }
+
+  // ====== LOKASI (GPS) ======
+  function ambilLokasi() {
+    return new Promise(function (resolve, reject) {
+      if (!navigator.geolocation) return reject({ code: 0 });
+      navigator.geolocation.getCurrentPosition(
+        function (p) { resolve({ lat: p.coords.latitude, lng: p.coords.longitude, akurasi: p.coords.accuracy }); },
+        function (e) { reject(e); },
+        { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 }
+      );
+    });
+  }
+  function pesanGps(e) {
+    var c = e && e.code;
+    if (c === 1) return 'Izin lokasi ditolak. Ketuk ikon gembok atau pengaturan di kolom alamat, ubah Lokasi menjadi Izinkan, lalu coba lagi.';
+    if (c === 2) return 'Lokasi tidak terdeteksi. Aktifkan GPS atau Lokasi di HP, lalu coba lagi.';
+    if (c === 3) return 'Pencarian lokasi terlalu lama. Pindah ke tempat terbuka, lalu coba lagi.';
+    return 'Browser ini tidak mendukung lokasi.';
+  }
+
+  // ====== KONFIRMASI ======
+  async function konfirmasi() {
+    var idSesi = sesiTerpilih();
+    if (!idSesi) return;
+    var sesi = state.sesi.filter(function (s) { return s.idSesi === idSesi; })[0];
+    $('btnKonfirmasi').disabled = true;
+    setMsg('sesiMsg', 'Mengambil lokasi… ketuk Izinkan bila muncul pertanyaan.');
+    var lok;
+    try { lok = await ambilLokasi(); }
+    catch (e) { setMsg('sesiMsg', pesanGps(e), 'err'); $('btnKonfirmasi').disabled = false; return; }
+
+    var data = {
+      action: 'absen', peran: state.peran, token: state.token, idSesi: idSesi,
+      lat: lok.lat, lng: lok.lng, akurasi: lok.akurasi, deviceId: deviceId()
+    };
+    if (state.peran === 'pengajar') data.materi = $('materi').value.trim();
+
+    if (MODE_UJI) {
+      return hasil('Uji berhasil', 'Mode uji: data BELUM disimpan ke sheet.', 'ok', [
+        ['Nama', state.user.nama], ['Kegiatan', sesi.kegiatan],
+        ['Koordinat', lok.lat.toFixed(6) + ', ' + lok.lng.toFixed(6)],
+        ['Akurasi GPS', '±' + Math.round(lok.akurasi) + ' m'],
+        ['Materi', data.materi || '-']
+      ]);
+    }
+    setMsg('sesiMsg', 'Menyimpan kehadiran…');
+    var r = await kirim(data);
+    if (!r.ok) { setMsg('sesiMsg', r.error || 'Gagal menyimpan.', 'err'); $('btnKonfirmasi').disabled = false; return; }
+    hasil('Kehadiran tercatat', r.pesan || '', 'ok', [
+      ['Nama', state.user.nama], ['Kegiatan', sesi.kegiatan],
+      ['Status', r.status || '-'], ['Jam absen', r.jam || '-'],
+      ['Jarak dari lokasi', r.jarak != null ? Math.round(r.jarak) + ' m' : '-']
+    ]);
+  }
+
+  function hasil(judul, pesan, tipe, baris) {
+    layar('hasil');
+    $('hasilJudul').textContent = judul;
+    setMsg('hasilPesan', pesan, tipe);
+    var box = $('hasilBaris'); box.textContent = '';
+    baris.forEach(function (b) {
+      var r = el('div', null, 'row'); r.appendChild(el('span', b[0])); r.appendChild(el('span', b[1])); box.appendChild(r);
+    });
+  }
+  function ulang() { stopKamera(); state = { peran: '', token: '', user: null, sesi: [] }; layar('pilih'); }
+
+  // ====== TOMBOL ======
+  Array.prototype.forEach.call(document.querySelectorAll('[data-peran]'), function (b) {
+    b.addEventListener('click', function () { mulaiScan(b.getAttribute('data-peran')); });   // ketukan = izin memulai kamera
+  });
+  $('btnRetry').addEventListener('click', function () { mulaiScan(); });
+  $('btnBatal').addEventListener('click', ulang);
+  $('btnManual').addEventListener('click', function () { var v = $('kodeManual').value.trim(); if (v) { stopKamera(); onKode(v); } });
+  $('btnKonfirmasi').addEventListener('click', konfirmasi);
+  $('btnGanti').addEventListener('click', function () { mulaiScan(state.peran); });
+  $('btnSelesai').addEventListener('click', ulang);
+  $('pilihSesi').addEventListener('change', cekSiap);
+  $('materi').addEventListener('input', cekSiap);
+
+  document.addEventListener('visibilitychange', function () {
+    if (document.hidden && running) { stopKamera(); gagalScan('Kamera dimatikan karena halaman ditinggalkan. Ketuk Coba lagi.'); }
+  });
+  window.addEventListener('pagehide', stopKamera);
 })();
 </script>
 </body>
