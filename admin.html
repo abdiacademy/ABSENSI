@@ -225,6 +225,10 @@
   .kotak p.qr-catatan { font-size: .82rem; margin: 10px 0 16px; }
   .daftar-lewat { margin: 0 0 16px; padding-left: 18px; color: var(--muted); font-size: .88rem; max-height: 180px; overflow-y: auto; }
 
+  /* ===== Halaman pengajar ===== */
+  .kepala.pg, .baris.pg { grid-template-columns: minmax(0, 2.2fr) minmax(0, 1fr) minmax(0, 1.2fr) 108px auto; }
+  .kepala.pg { padding-left: 16px; }
+
   /* ===== Kartu QR untuk dicetak ===== */
   #areaCetak { display: none; }
   .kartu { width: 90mm; height: 56mm; border: 1px solid #cfc9cb; border-radius: 3mm; overflow: hidden; display: flex; flex-direction: column; background: #fff; color: #1A1416; break-inside: avoid; page-break-inside: avoid; font-family: var(--font); }
@@ -274,6 +278,8 @@
     .toast { bottom: 96px; }
     .kepala { display: none; }
     .baris { grid-template-columns: 32px minmax(0, 1fr) auto; grid-template-areas: "cek nama status" ". kelas kelas" ". hp hp" ". aksi aksi"; row-gap: 6px; align-items: start; }
+    .baris.pg { grid-template-columns: minmax(0, 1fr) auto; grid-template-areas: "nama status" "kelas kelas" "hp hp" "aksi aksi"; }
+    .baris.pg .k-cek { display: none; }
     .k-cek { grid-area: cek; padding-top: 2px; } .k-nama { grid-area: nama; } .k-kelas { grid-area: kelas; } .k-hp { grid-area: hp; }
     .k-status { grid-area: status; } .k-aksi { grid-area: aksi; justify-content: flex-start; margin-top: 4px; }
     .alat .sel { flex: 1 1 140px; }
@@ -400,6 +406,31 @@
       <div class="kosong" id="kosongSiswa" hidden></div>
       <datalist id="saranKelas"></datalist>
     </div>
+
+    <div id="viewPengajar" hidden>
+      <div class="judul-hal">
+        <div><h1>Pengajar</h1><p class="sub" id="pengajarJumlah">Memuat data pengajar…</p></div>
+        <div class="alat-judul">
+          <button class="btn" id="btnTambahPengajar" type="button">Tambah pengajar</button>
+        </div>
+      </div>
+      <div class="alat">
+        <input id="cariPengajar" class="isi cari" type="search" placeholder="Cari nama, ID, atau jenis" aria-label="Cari pengajar" autocomplete="off">
+        <select id="fStatusPengajar" class="sel" aria-label="Filter status">
+          <option value="AKTIF">Aktif</option><option value="NONAKTIF">Nonaktif</option><option value="">Semua status</option>
+        </select>
+      </div>
+      <div class="bar-cetak">
+        <button class="btn garis kecil" id="btnCetakPengajar" type="button">Cetak kartu</button>
+        <button class="btn netral kecil" id="btnMuatPengajar" type="button">Muat ulang</button>
+      </div>
+      <div class="tabel" id="tabelPengajar" hidden>
+        <div class="kepala pg"><div>Nama</div><div>Jenis</div><div>Nomor HP</div><div>Status</div><div></div></div>
+        <div id="barisPengajar"></div>
+      </div>
+      <div class="kosong" id="kosongPengajar" hidden></div>
+      <datalist id="saranJenis"></datalist>
+    </div>
   </main>
 </div>
 
@@ -484,7 +515,8 @@ var AA = (function () {
 
   var $ = function (id) { return document.getElementById(id); };
   var S = { token: '', user: null, data: null, offset: 0, memuat: false, pilihan: {}, lini: null, pertama: true, gagal: false, pewaktu: 0,
-            view: 'dash', menuBtn: {}, siswa: null, siswaMuat: false, cari: '', fStatus: 'AKTIF', fKelas: '', pilih: {} };
+            view: 'dash', menuBtn: {}, siswa: null, siswaMuat: false, cari: '', fStatus: 'AKTIF', fKelas: '', pilih: {},
+            pengajar: null, pengajarMuat: false, pCari: '', pFStatus: 'AKTIF' };
 
   /* ---------- Alat kecil ---------- */
   function tambah(n, c) {
@@ -761,13 +793,13 @@ var AA = (function () {
   function tampilApp() {
     $('login').hidden = true; $('app').hidden = false; $('navBawah').hidden = false;
     $('akunNama').textContent = S.user.nama; $('akunPeran').textContent = S.user.role === 'SUPERADMIN' ? 'Admin utama' : 'Admin';
-    S.pertama = true; S.data = null; S.siswa = null; S.pilihan = {}; S.pilih = {}; tickJam(); ubahView(hashAwal(), true);
+    S.pertama = true; S.data = null; S.siswa = null; S.pengajar = null; S.pilihan = {}; S.pilih = {}; tickJam(); ubahView(hashAwal(), true);
     clearInterval(S.pewaktu);
     S.pewaktu = setInterval(function () { if (!document.hidden && S.token && S.view === 'dash') muat(true); }, JEDA_PERBARUI);
   }
   function simpanSesi() { try { sessionStorage.setItem('abdi_admin', JSON.stringify({ t: S.token, u: S.user })); } catch (e) {} }
   function hapusSesi() { try { sessionStorage.removeItem('abdi_admin'); } catch (e) {} }
-  function keluarLokal(pesanGalat) { S.token = ''; S.user = null; S.data = null; S.siswa = null; S.pilih = {}; clearInterval(S.pewaktu); hapusSesi(); tampilLogin(pesanGalat); }
+  function keluarLokal(pesanGalat) { S.token = ''; S.user = null; S.data = null; S.siswa = null; S.pengajar = null; S.pilih = {}; clearInterval(S.pewaktu); hapusSesi(); tampilLogin(pesanGalat); }
 
   async function masuk(e) {
     e.preventDefault();
@@ -822,14 +854,14 @@ var AA = (function () {
     }, 'image/png');
   }
 
-  function cetakKartu(daftar) {
+  function cetakKartu(daftar, label) {
     if (!qrSiap()) { toast(PESAN_QR, true); return; }
     var area = $('areaCetak'); area.textContent = '';
     daftar.forEach(function (s) {
       if (!s.token) return;
       area.appendChild(h('div', { class: 'kartu' },
         h('div', { class: 'kartu-atas' }, h('span', { class: 'kartu-lencana', text: 'AA' }),
-          h('div', null, h('div', { class: 'kartu-merek', text: 'Abdi Academy' }), h('div', { class: 'kartu-jenis', text: 'Kartu absensi siswa' }))),
+          h('div', null, h('div', { class: 'kartu-merek', text: 'Abdi Academy' }), h('div', { class: 'kartu-jenis', text: label || 'Kartu absensi siswa' }))),
         h('div', { class: 'kartu-isi' },
           h('div', { class: 'kartu-teks' }, h('div', { class: 'kartu-nama', text: s.nama }), h('div', { class: 'kartu-id', text: s.id }), s.kelas ? h('div', { class: 'kartu-kelas', text: s.kelas }) : null),
           h('div', { class: 'kartu-qr' }, svgQR(s.token))),
@@ -1070,21 +1102,147 @@ var AA = (function () {
     modal('Hasil tambah banyak', isi, [{ teks: 'Selesai', klik: function (tutup) { tutup(); } }]);
   }
 
+  /* ====================== PENGAJAR ====================== */
+  function saringPengajar() {
+    var c = S.pCari.trim().toLowerCase();
+    return (S.pengajar || []).filter(function (g) {
+      if (S.pFStatus && g.status !== S.pFStatus) return false;
+      return !c || (g.nama + ' ' + g.id + ' ' + g.jenis).toLowerCase().indexOf(c) >= 0;
+    }).sort(function (a, b) { return a.nama.localeCompare(b.nama, 'id'); });
+  }
+  async function muatPengajar(diam) {
+    if (S.pengajarMuat || !S.token) return;
+    S.pengajarMuat = true; if (!diam) $('pengajarJumlah').textContent = 'Memuat data pengajar…';
+    var r = await adm('admin_pengajar_daftar');
+    S.pengajarMuat = false;
+    if (!r) return;
+    if (r.ok && !Array.isArray(r.pengajar)) r = galatLengkap(r);
+    if (!r.ok) { $('pengajarJumlah').textContent = 'Gagal memuat data pengajar.'; toast(pesan(r, 'Gagal memuat data pengajar.'), true); return; }
+    S.pengajar = r.pengajar;
+    renderPengajar();
+  }
+  function barisPengajar(g) {
+    return h('div', { class: 'baris pg' + (g.status !== 'AKTIF' ? ' nonaktif' : '') },
+      h('div', { class: 'k-nama' }, h('div', { class: 'nm', text: g.nama }), h('div', { class: 'id', text: g.id })),
+      h('div', { class: 'k-kelas', text: g.jenis || '-' }),
+      h('div', { class: 'k-hp', text: g.hp || '-' }),
+      h('div', { class: 'k-status' }, badgeStatus(g.status)),
+      h('div', { class: 'k-aksi' },
+        h('button', { type: 'button', class: 'btn kecil', text: 'QR', 'aria-label': 'Lihat QR ' + g.nama, onclick: function () { modalQRPengajar(g); } }),
+        h('button', { type: 'button', class: 'btn netral kecil', text: 'Ubah', 'aria-label': 'Ubah ' + g.nama, onclick: function () { formPengajar(g); } }),
+        h('button', { type: 'button', class: 'btn netral kecil', text: g.status === 'AKTIF' ? 'Nonaktifkan' : 'Aktifkan', onclick: function () { ubahStatusPengajar(g); } })));
+  }
+  function renderPengajar() {
+    if (!S.pengajar) return;
+    var aktif = S.pengajar.filter(function (g) { return g.status === 'AKTIF'; }).length;
+    $('pengajarJumlah').textContent = aktif + ' aktif, ' + (S.pengajar.length - aktif) + ' nonaktif';
+    var jenis = {}; S.pengajar.forEach(function (g) { if (g.jenis) jenis[g.jenis] = true; });
+    var daftarJenis = Object.keys(jenis).sort(function (a, b) { return a.localeCompare(b, 'id'); });
+    var dl = $('saranJenis'); dl.textContent = '';
+    ['Guru', 'Pelatih', 'Tutor', 'Asisten'].forEach(function (j) { if (daftarJenis.indexOf(j) < 0) dl.appendChild(h('option', { value: j })); });
+    daftarJenis.forEach(function (j) { dl.appendChild(h('option', { value: j })); });
+
+    var tampil = saringPengajar(), box = $('barisPengajar'), kosong = $('kosongPengajar');
+    box.textContent = ''; tampil.forEach(function (g) { box.appendChild(barisPengajar(g)); });
+    $('tabelPengajar').hidden = !tampil.length; kosong.hidden = !!tampil.length; kosong.textContent = '';
+    if (!tampil.length) {
+      if (!S.pengajar.length) kosong.appendChild(h('div', null, h('b', { text: 'Belum ada pengajar.' }), 'Klik Tambah pengajar untuk mendaftarkan satu orang.'));
+      else kosong.appendChild(h('div', null, h('b', { text: 'Tidak ada pengajar yang cocok.' }), 'Ubah kata pencarian atau filter status di atas.'));
+    }
+  }
+  function formPengajar(g) {
+    var baru = !g;
+    var inNama = h('input', { class: 'isi', type: 'text', maxlength: '80', autocomplete: 'off', id: 'fpNama' });
+    var inJenis = h('input', { class: 'isi', type: 'text', maxlength: '30', autocomplete: 'off', list: 'saranJenis', id: 'fpJenis' });
+    var inHp = h('input', { class: 'isi', type: 'tel', maxlength: '20', autocomplete: 'off', inputmode: 'tel', id: 'fpHp' });
+    inNama.value = baru ? '' : g.nama; inJenis.value = baru ? '' : g.jenis; inHp.value = baru ? '' : g.hp;
+    var galat = h('p', { class: 'galat-form', role: 'alert', hidden: true });
+    var medan = function (label, el, id, petunjuk) { return h('div', { class: 'medan' }, h('label', { for: id, text: label }), el, petunjuk ? h('p', { class: 'petunjuk', text: petunjuk }) : null); };
+    var isi = h('div', null, galat,
+      medan('Nama lengkap', inNama, 'fpNama'),
+      medan('Jenis pengajar (boleh kosong)', inJenis, 'fpJenis', 'Contoh: Guru, Pelatih, Tutor, Asisten'),
+      medan('Nomor HP (boleh kosong)', inHp, 'fpHp', 'Contoh: 081234567890'));
+    var tombol = [];
+    if (!baru) tombol.push({ teks: 'Hapus pengajar', kelas: 'bahaya kiri', klik: function (tutup) { hapusPengajar(g, tutup); } });
+    tombol.push({ teks: 'Batal', kelas: 'netral', klik: function (tutup) { tutup(); } });
+    tombol.push({ teks: baru ? 'Tambahkan' : 'Simpan', klik: function (tutup, btn) { simpanPengajar(g, { nama: inNama, jenis: inJenis, hp: inHp, galat: galat }, tutup, btn); } });
+    modal(baru ? 'Tambah pengajar' : 'Ubah data pengajar', isi, tombol);
+    inNama.focus();
+  }
+  async function simpanPengajar(g, f, tutup, tombol) {
+    var data = { nama: f.nama.value.trim(), jenis: f.jenis.value.trim(), hp: f.hp.value.trim() };
+    var salah = function (t) { f.galat.textContent = t; f.galat.hidden = false; tombol.disabled = false; };
+    if (data.nama.length < 2) { salah('Nama wajib diisi (minimal 2 huruf).'); f.nama.focus(); return; }
+    tombol.disabled = true; f.galat.hidden = true;
+    var params = Object.assign({}, data); if (g) params.id = g.id;
+    var r = await adm('admin_pengajar_simpan', params);
+    if (r && r.kode === 'DUPLIKAT') {
+      var ya = await tanya('Nama sudah ada', r.error, 'Tetap simpan');
+      if (!ya) { tombol.disabled = false; return; }
+      params.lanjut = '1'; r = await adm('admin_pengajar_simpan', params);
+    }
+    if (!r) return;
+    if (r.ok && !r.id) r = galatLengkap(r);
+    if (!r.ok) { salah(pesan(r, 'Gagal menyimpan.')); return; }
+    tutup(); toast(g ? 'Data pengajar diperbarui.' : 'Pengajar ditambahkan.');
+    await muatPengajar(true);
+    if (!g) { var baru = (S.pengajar || []).filter(function (x) { return x.id === r.id; })[0]; if (baru) modalQRPengajar(baru); }
+  }
+  async function hapusPengajar(g, tutupForm) {
+    var ya = await tanya('Hapus ' + g.nama + '?', 'Data pengajar dihapus permanen. Pengajar yang sudah punya riwayat absensi tidak bisa dihapus, nonaktifkan saja.', 'Hapus');
+    if (!ya) return;
+    var r = await adm('admin_pengajar_hapus', { id: g.id }); if (!r) return;
+    if (r.ok && !r.id) r = galatLengkap(r);
+    if (!r.ok) { toast(pesan(r, 'Gagal menghapus.'), true); return; }
+    tutupForm(); toast('Pengajar dihapus.'); muatPengajar(true);
+  }
+  async function ubahStatusPengajar(g) {
+    var ke = g.status === 'AKTIF' ? 'NONAKTIF' : 'AKTIF';
+    if (ke === 'NONAKTIF') {
+      var ya = await tanya('Nonaktifkan ' + g.nama + '?', 'Pengajar tidak bisa absen lagi, tetapi riwayat absensinya tetap tersimpan. Bisa diaktifkan kembali kapan saja.', 'Nonaktifkan');
+      if (!ya) return;
+    }
+    var r = await adm('admin_pengajar_status', { id: g.id, status: ke }); if (!r) return;
+    if (r.ok && !r.id) r = galatLengkap(r);
+    if (!r.ok) { toast(pesan(r, 'Gagal mengubah status.'), true); return; }
+    toast(ke === 'AKTIF' ? g.nama + ' diaktifkan.' : g.nama + ' dinonaktifkan.'); muatPengajar(true);
+  }
+  function modalQRPengajar(g) {
+    var gambar = qrSiap() && g.token ? h('div', { class: 'qr-gambar' }, svgQR(g.token)) : h('p', { class: 'galat-form', text: g.token ? PESAN_QR : 'Pengajar ini belum punya kode QR.' });
+    var isi = h('div', { class: 'qr-kotak' }, gambar,
+      h('div', { class: 'qr-nama', text: g.nama }), h('div', { class: 'qr-id', text: g.id + (g.jenis ? ', ' + g.jenis : '') }),
+      h('p', { class: 'qr-catatan', text: 'QR ini berisi kode unik pengajar. Berikan hanya kepada pengajar yang bersangkutan.' }));
+    var m = modal('Kartu QR pengajar', isi, [
+      { teks: 'Buat QR baru', kelas: 'netral kiri', klik: function () { buatQrBaruPengajar(g, m); } },
+      { teks: 'Unduh PNG', kelas: 'netral', klik: function () { unduhPNG(g); } },
+      { teks: 'Cetak kartu', klik: function (tutup) { tutup(); cetakKartu([g], 'Kartu absensi pengajar'); } }]);
+  }
+  async function buatQrBaruPengajar(g, m) {
+    var ya = await tanya('Buat QR baru untuk ' + g.nama + '?', 'QR yang lama langsung tidak berlaku. Kartu atau gambar QR lama tidak bisa dipakai absen lagi.', 'Buat QR baru');
+    if (!ya) return;
+    var r = await adm('admin_pengajar_token_baru', { id: g.id }); if (!r) return;
+    if (r.ok && !r.id) r = galatLengkap(r);
+    if (!r.ok) { toast(pesan(r, 'Gagal membuat QR baru.'), true); return; }
+    m.tutup(); toast('QR baru dibuat. QR lama tidak berlaku lagi.');
+    await muatPengajar(true);
+    var baru = (S.pengajar || []).filter(function (x) { return x.id === g.id; })[0]; if (baru) modalQRPengajar(baru);
+  }
+
   /* ---------- Pindah halaman ---------- */
-  function hashAwal() { try { return location.hash === '#siswa' ? 'siswa' : 'dash'; } catch (e) { return 'dash'; } }
+  function hashAwal() { try { return location.hash === '#siswa' ? 'siswa' : location.hash === '#pengajar' ? 'pengajar' : 'dash'; } catch (e) { return 'dash'; } }
   function ubahView(nama, awal) {
-    S.view = nama === 'siswa' ? 'siswa' : 'dash';
-    $('viewDash').hidden = S.view !== 'dash'; $('viewSiswa').hidden = S.view !== 'siswa';
+    S.view = nama === 'siswa' ? 'siswa' : nama === 'pengajar' ? 'pengajar' : 'dash';
+    $('viewDash').hidden = S.view !== 'dash'; $('viewSiswa').hidden = S.view !== 'siswa'; $('viewPengajar').hidden = S.view !== 'pengajar';
     Object.keys(S.menuBtn).forEach(function (k) {
       S.menuBtn[k].forEach(function (b) { if (k === S.view) b.setAttribute('aria-current', 'page'); else b.removeAttribute('aria-current'); });
     });
     try { history.replaceState(null, '', S.view === 'dash' ? location.pathname + location.search : '#' + S.view); } catch (e) {}
     try { window.scrollTo(0, 0); } catch (e) {}
-    if (S.view === 'dash') muat(!!S.data); else muatSiswa(!!S.siswa);
+    if (S.view === 'dash') muat(!!S.data); else if (S.view === 'siswa') muatSiswa(!!S.siswa); else muatPengajar(!!S.pengajar);
   }
 
   /* ---------- Menu ---------- */
-  var MENU = [['dash', 'Dashboard', true], ['siswa', 'Siswa', true], ['pengajar', 'Pengajar', false], ['admin', 'Admin', false], ['atur', 'Pengaturan', false]];
+  var MENU = [['dash', 'Dashboard', true], ['siswa', 'Siswa', true], ['pengajar', 'Pengajar', true], ['admin', 'Admin', false], ['atur', 'Pengaturan', false]];
   function bangunMenu() {
     var samping = $('navSamping'), bawah = $('navBawah'); S.menuBtn = {};
     MENU.forEach(function (m) {
@@ -1117,6 +1275,16 @@ var AA = (function () {
       saringSiswa().forEach(function (x) { if (e.target.checked) S.pilih[x.id] = true; else delete S.pilih[x.id]; }); renderSiswa();
     });
     $('btnBatalPilih').addEventListener('click', function () { S.pilih = {}; renderSiswa(); });
+    $('btnTambahPengajar').addEventListener('click', function () { formPengajar(null); });
+    $('btnMuatPengajar').addEventListener('click', function () { muatPengajar(false); });
+    $('cariPengajar').addEventListener('input', function (e) { S.pCari = e.target.value; renderPengajar(); });
+    $('fStatusPengajar').addEventListener('change', function (e) { S.pFStatus = e.target.value; renderPengajar(); });
+    $('btnCetakPengajar').addEventListener('click', async function () {
+      var daftar = saringPengajar().filter(function (x) { return x.token; });
+      if (!daftar.length) { toast('Tidak ada kartu untuk dicetak.', true); return; }
+      if (daftar.length > 60 && !(await tanya('Cetak ' + daftar.length + ' kartu?', 'Satu halaman A4 memuat 8 kartu, jadi ini sekitar ' + Math.ceil(daftar.length / 8) + ' halaman.', 'Lanjut cetak'))) return;
+      cetakKartu(daftar, 'Kartu absensi pengajar');
+    });
     $('btnCetak').addEventListener('click', async function () {
       var daftar = targetCetak().filter(function (x) { return x.token; });
       if (!daftar.length) { toast('Tidak ada kartu untuk dicetak.', true); return; }
