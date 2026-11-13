@@ -3,58 +3,113 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <title>Absensi – Abdi Academy</title>
 <style>
+
+  /* ===== Desain sistem: Abdi Academy "Clean & Fresh" ===== */
   :root {
-    --bg: #f4f6fb; --card: #ffffff; --text: #1b2430; --muted: #5b6676;
-    --primary: #1f3864; --primary-text: #ffffff; --accent: #2e75b6;
-    --ok: #1b7f3b; --err: #b3261e; --warn-bg: #fff4d6; --warn-text: #5c4300; --border: #d5dbe6;
+    --marun: #510203; --merah: #AC0203; --merah-tua: #8A0102;
+    --bg: #F7F5F6; --card: #FFFFFF; --text: #241518; --muted: #827176;
+    --primary: #AC0203; --primary-tua: #8A0102; --primary-text: #ffffff; --aksen: #AC0203;
+    --ok: #178A5E; --err: #B3261E;
+    --kuning: #8F5B00; --warn-bg: #FBEFCC; --warn-text: #8F5B00;
+    --border: #ECE6E8; --soft: #F5EFEF; --merah-bg: #FBE9EA;
+    --bayang: 0 1px 2px rgba(43,6,8,.05), 0 10px 30px -20px rgba(43,6,8,.28);
+    --font: 'Plus Jakarta Sans', system-ui, -apple-system, 'Segoe UI', Roboto, Arial, sans-serif;
     color-scheme: light dark;
   }
   @media (prefers-color-scheme: dark) {
     :root {
-      --bg: #12161d; --card: #1b212b; --text: #e8ecf3; --muted: #9aa5b5;
-      --primary: #3b6cb7; --primary-text: #ffffff; --accent: #6aa7e6;
-      --ok: #5ad083; --err: #ff8a80; --warn-bg: #3b3115; --warn-text: #ffe7a3; --border: #333c4a;
+      --bg: #140E0F; --card: #1F1517; --text: #F5EDED; --muted: #B0A1A4;
+      --primary: #C63A3B; --primary-tua: #A32F30; --aksen: #FF8A8B;
+      --ok: #5ED3A5; --err: #FF8A80;
+      --warn-bg: rgba(242,184,75,.14); --warn-text: #F2B84B;
+      --border: #3B2C2F; --soft: #2A1E20; --merah-bg: rgba(233,90,91,.16);
+      --bayang: 0 1px 2px rgba(0,0,0,.35), 0 14px 38px -24px rgba(0,0,0,.8);
     }
   }
   * { box-sizing: border-box; }
-  body { margin: 0; font-family: Arial, Helvetica, sans-serif; background: var(--bg); color: var(--text); }
-  main { max-width: 480px; margin: 0 auto; padding: 16px 16px 40px; }
-  .top { text-align: center; padding: 8px 0 14px; }
-  .brand { font-size: 1.3rem; font-weight: bold; }
+  html { -webkit-text-size-adjust: 100%; }
+  body { margin: 0; font-family: var(--font); color: var(--text); line-height: 1.5; -webkit-font-smoothing: antialiased;
+         background: linear-gradient(180deg, rgba(172,2,3,.05), rgba(172,2,3,0) 240px) var(--bg); }
+  [hidden] { display: none !important; }
+  :focus-visible { outline: 3px solid var(--aksen); outline-offset: 2px; border-radius: 6px; }
+  h2 { letter-spacing: -.01em; }
+
+  main { max-width: 480px; margin: 0 auto; padding: 16px 16px 44px; }
+
+  /* ===== Kepala halaman ===== */
+  .top { text-align: center; padding: 10px 0 16px; }
+  .brand { font-size: 1.3rem; font-weight: 800; letter-spacing: -.01em; }
   .tgl { color: var(--muted); font-size: .9rem; margin-top: 2px; }
-  .jam { font-size: 1.8rem; font-weight: bold; letter-spacing: 1px; font-variant-numeric: tabular-nums; }
-  .badge { display: inline-block; margin-top: 6px; padding: 3px 10px; border-radius: 99px; background: var(--warn-bg); color: var(--warn-text); font-size: .78rem; font-weight: bold; }
-  .card { background: var(--card); border: 1px solid var(--border); border-radius: 14px; padding: 16px; margin-bottom: 14px; }
-  .btn { display: block; width: 100%; padding: 16px; margin: 8px 0; border: 0; border-radius: 12px;
-         font-size: 1.05rem; font-weight: bold; background: var(--primary); color: var(--primary-text); cursor: pointer; }
-  .btn.alt { background: var(--accent); }
-  .btn.ghost { background: transparent; color: var(--text); border: 1px solid var(--border); font-weight: normal; }
-  .btn:disabled { opacity: .45; cursor: not-allowed; }
-  .warn { background: var(--warn-bg); color: var(--warn-text); border-radius: 12px; padding: 12px 14px; margin-bottom: 14px; font-size: .92rem; line-height: 1.4; }
+  .jam { font-size: 1.8rem; font-weight: 800; letter-spacing: .5px; font-variant-numeric: tabular-nums; color: var(--marun); }
+  @media (prefers-color-scheme: dark) { .jam { color: var(--aksen); } }
+  .badge { display: inline-block; margin-top: 8px; padding: 3px 12px; border-radius: 99px; background: var(--warn-bg); color: var(--warn-text);
+           font-size: .78rem; font-weight: 700; }
+
+  /* ===== Kartu & tombol ===== */
+  .card { background: var(--card); border: 1px solid var(--border); border-radius: 18px; padding: 18px; margin-bottom: 14px;
+          box-shadow: var(--bayang); }
+  .btn { display: block; width: 100%; padding: 14px; margin: 8px 0; border: 0; border-radius: 12px;
+         font-size: 1rem; font-weight: 700; background: linear-gradient(180deg, var(--primary), var(--primary-tua));
+         color: var(--primary-text); cursor: pointer;
+         box-shadow: 0 1px 2px rgba(138,1,2,.28), inset 0 1px 0 rgba(255,255,255,.16);
+         transition: filter .15s, transform .15s, box-shadow .15s; }
+  .btn:hover { filter: brightness(1.07); transform: translateY(-1px); }
+  .btn:active { transform: translateY(0); filter: brightness(.97); }
+  .btn.alt { background: var(--card); color: var(--aksen); border: 1.5px solid var(--primary); box-shadow: none; }
+  .btn.alt:hover { background: var(--merah-bg); filter: none; }
+  .btn.ghost { background: transparent; color: var(--text); border: 1.5px solid var(--border); font-weight: 600; box-shadow: none; }
+  .btn.ghost:hover { border-color: var(--muted); filter: none; }
+  .btn:disabled { opacity: .45; cursor: not-allowed; transform: none; box-shadow: none; }
+
+  /* ===== Peringatan & pesan ===== */
+  .warn { background: var(--warn-bg); color: var(--warn-text); border-radius: 12px; padding: 12px 14px; margin-bottom: 14px;
+          font-size: .92rem; line-height: 1.45; }
   .warn p { margin: 4px 0; }
-  .frame { position: relative; width: 100%; aspect-ratio: 1 / 1; background: #000; border-radius: 14px; overflow: hidden; }
+
+  /* ===== Kamera ===== */
+  .frame { position: relative; width: 100%; aspect-ratio: 1 / 1; background: #000; border-radius: 16px; overflow: hidden; }
   .frame video { width: 100%; height: 100%; object-fit: cover; display: block; }
-  .guide { position: absolute; inset: 15%; border: 3px solid rgba(255,255,255,.85); border-radius: 12px; pointer-events: none; }
-  .msg { min-height: 2.6em; margin: 12px 0 4px; line-height: 1.4; white-space: pre-line; }
-  .msg.err { color: var(--err); font-weight: bold; }
-  .msg.ok { color: var(--ok); font-weight: bold; }
-  h2 { font-size: 1.15rem; margin: 0 0 4px; }
+  .guide { position: absolute; inset: 15%; border: 3px solid rgba(255,255,255,.9); border-radius: 14px; pointer-events: none;
+           box-shadow: 0 0 0 9999px rgba(0,0,0,.25); }
+  .msg { min-height: 2.6em; margin: 12px 0 4px; line-height: 1.45; white-space: pre-line; }
+  .msg.err { color: var(--err); font-weight: 700; }
+  .msg.ok { color: var(--ok); font-weight: 700; }
+
+  /* ===== Isian & pilihan sesi ===== */
   .muted { color: var(--muted); font-size: .9rem; }
-  .opt { display: flex; gap: 10px; align-items: flex-start; padding: 12px; margin: 8px 0; border: 1px solid var(--border); border-radius: 12px; cursor: pointer; }
-  .opt input { margin-top: 4px; width: 20px; height: 20px; flex: none; }
-  .opt .t { font-weight: bold; }
+  .opt { display: flex; gap: 12px; align-items: flex-start; padding: 13px 14px; margin: 8px 0; border: 1.5px solid var(--border);
+         border-radius: 12px; cursor: pointer; transition: border-color .15s, background .15s; }
+  .opt:has(input:checked) { border-color: var(--primary); background: var(--merah-bg); }
+  .opt input { margin-top: 4px; width: 20px; height: 20px; flex: none; accent-color: var(--primary); }
+  .opt .t { font-weight: 700; }
   .opt .d { color: var(--muted); font-size: .88rem; margin-top: 2px; line-height: 1.35; }
-  label.f { display: block; margin: 12px 0 4px; font-weight: bold; font-size: .95rem; }
-  select, input[type=text], textarea { width: 100%; padding: 12px; border-radius: 10px; border: 1px solid var(--border);
-         background: var(--bg); color: var(--text); font-size: 1rem; font-family: inherit; }
+  label.f { display: block; margin: 12px 0 4px; font-weight: 700; font-size: .95rem; }
+  select, input[type=text], textarea { width: 100%; padding: 12px 13px; border-radius: 12px; border: 1.5px solid var(--border);
+         background: var(--card); color: var(--text); font-size: 1rem; font-family: inherit;
+         transition: border-color .15s, box-shadow .15s; }
+  select:focus, input[type=text]:focus, textarea:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 3.5px var(--merah-bg); }
+  ::placeholder { color: var(--muted); opacity: .8; }
   textarea { min-height: 84px; resize: vertical; }
-  .row { display: flex; justify-content: space-between; gap: 12px; padding: 7px 0; border-bottom: 1px solid var(--border); font-size: .95rem; }
+
+  /* ===== Baris rincian hasil ===== */
+  .row { display: flex; justify-content: space-between; gap: 12px; padding: 9px 0; border-bottom: 1px solid var(--border); font-size: .95rem; }
   .row:last-child { border-bottom: 0; }
   .row span:first-child { color: var(--muted); }
-  .row span:last-child { font-weight: bold; text-align: right; word-break: break-word; }
-  [hidden] { display: none !important; }
+  .row span:last-child { font-weight: 700; text-align: right; word-break: break-word; font-variant-numeric: tabular-nums; }
+
+  @media (max-width: 360px) {
+    main { padding: 12px 12px 36px; }
+    .jam { font-size: 1.55rem; }
+    .btn { padding: 13px 12px; font-size: .95rem; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { animation: none !important; transition: none !important; }
+  }
 </style>
 </head>
 <body>
@@ -328,7 +383,7 @@
     if (r.ok && !r.nama) r = { ok: false, error: 'Balasan server tidak lengkap. Kemungkinan backend belum versi terbaru.', teknis: 'balasan: ' + JSON.stringify(r).slice(0, 140) };
     if (!r.ok) return gagalScan(pesan(r, 'QR tidak dikenali.'));
     state.token = teks; state.user = r;
-    setMsg('scanMsg', 'Halo, ' + r.nama + '. Memuat jadwal hari ini…', 'ok');
+    setMsg('scanMsg', 'Selamat datang, ' + r.nama + '. Memuat jadwal hari ini…', 'ok');
     var s = await ambil({ action: 'sesi' });
     if (s.ok && !Array.isArray(s.sesi)) s = { ok: false, error: 'Balasan server tidak lengkap. Kemungkinan backend belum versi terbaru.', teknis: 'balasan: ' + JSON.stringify(s).slice(0, 140) };
     if (!s.ok) return gagalScan(pesan(s, 'Gagal memuat jadwal.'));
@@ -356,7 +411,7 @@
   function tampilSesi() {
     layar('sesi');
     var siswa = state.peran === 'siswa';
-    $('sapaan').textContent = 'Halo, ' + state.user.nama;
+    $('sapaan').textContent = 'Selamat datang, ' + state.user.nama;
     $('peranInfo').textContent = siswa ? 'Siswa' : 'Pengajar / Pelatih';
     setMsg('sesiMsg', '');
     $('boxSiswa').hidden = !siswa; $('boxPengajar').hidden = siswa;
