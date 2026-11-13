@@ -245,7 +245,7 @@
   .alat .sel { width: auto; min-width: 140px; }
   .bar-cetak { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 12px; }
   .tabel { background: var(--card); border: 1px solid var(--line); border-radius: var(--radius); overflow: hidden; box-shadow: var(--bayang); }
-  .kepala, .baris { display: grid; grid-template-columns: 40px minmax(0, 2fr) minmax(0, 1.1fr) minmax(0, 1.2fr) 108px auto; gap: 12px; align-items: center; padding: 12px 16px; }
+  .kepala, .baris { display: grid; grid-template-columns: 40px minmax(0, 2fr) minmax(0, 1.1fr) minmax(0, 1.2fr) 108px 240px; gap: 12px; align-items: center; padding: 12px 16px; }
   .kepala { background: var(--soft); color: var(--muted); font-size: .74rem; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; }
   .baris { border-top: 1px solid var(--line); }
   @media (hover: hover) { .baris:hover { background: var(--soft); } }
@@ -254,6 +254,16 @@
   .baris.nonaktif .k-nama, .baris.nonaktif .k-kelas, .baris.nonaktif .k-hp, .baris.nonaktif .k-user, .baris.nonaktif .k-role, .baris.nonaktif .k-login { opacity: .6; }
   .baris .k-kelas, .baris .k-hp, .baris .k-user, .baris .k-role, .baris .k-login { overflow-wrap: anywhere; font-size: .92rem; }
   .k-aksi { display: flex; gap: 8px; justify-content: flex-end; flex-wrap: wrap; }
+  /* Rata tengah kolom data agar sejajar dengan judul kolomnya */
+  .baris .k-kelas, .baris .k-hp, .baris .k-user, .baris .k-role, .baris .k-login { text-align: center; }
+  .baris .k-status { text-align: center; }
+  /* Header mengikuti perataan kolom datanya (siswa punya 6 sel, pengajar 5, admin 6) */
+  .kepala:not(.pg):not(.ad) > :nth-child(n+3):not(:nth-child(6)) { text-align: center; }
+  .kepala:not(.pg):not(.ad) > :nth-child(6) { text-align: right; }
+  .kepala.pg > :nth-child(2), .kepala.pg > :nth-child(3), .kepala.pg > :nth-child(4) { text-align: center; }
+  .kepala.pg > :nth-child(5) { text-align: right; }
+  .kepala.ad > :nth-child(2), .kepala.ad > :nth-child(3), .kepala.ad > :nth-child(4), .kepala.ad > :nth-child(5) { text-align: center; }
+  .kepala.ad > :nth-child(6) { text-align: right; }
   input[type=checkbox] { width: 18px; height: 18px; accent-color: var(--merah); margin: 0; }
   textarea.isi { min-height: 170px; resize: vertical; line-height: 1.5; }
   .medan .petunjuk { margin: 6px 0 0; font-size: .82rem; color: var(--muted); }
@@ -267,12 +277,10 @@
   .daftar-lewat { margin: 0 0 16px; padding-left: 18px; color: var(--muted); font-size: .88rem; max-height: 180px; overflow-y: auto; }
 
   /* ===== Halaman pengajar ===== */
-  .kepala.pg, .baris.pg { grid-template-columns: minmax(0, 2.2fr) minmax(0, 1fr) minmax(0, 1.2fr) 108px auto; }
-  .kepala.pg { padding-left: 16px; }
+  .kepala.pg, .baris.pg { grid-template-columns: minmax(0, 2.2fr) minmax(0, 1fr) minmax(0, 1.2fr) 108px 240px; }
 
   /* ===== Halaman admin ===== */
-  .kepala.ad, .baris.ad { grid-template-columns: minmax(0, 1.8fr) minmax(0, 1.1fr) 96px minmax(0, 1.1fr) 96px auto; }
-  .kepala.ad { padding-left: 16px; }
+  .kepala.ad, .baris.ad { grid-template-columns: minmax(0, 1.8fr) minmax(0, 1.1fr) 96px minmax(0, 1.1fr) 96px 360px; }
   .kotak-kunci { background: var(--card); border: 1px solid var(--line); border-radius: var(--radius); padding: 22px; margin-top: 18px; max-width: 460px; box-shadow: var(--bayang); }
   .kotak-kunci h2 { margin: 0 0 14px; font-size: 1.05rem; }
   .kotak-pass { background: var(--hijau-bg); color: var(--hijau); border-radius: var(--radius-k); padding: 12px 14px;
@@ -346,6 +354,8 @@
     .k-cek { grid-area: cek; padding-top: 2px; } .k-nama { grid-area: nama; } .k-kelas { grid-area: kelas; } .k-hp { grid-area: hp; }
     .k-user { grid-area: user; } .k-role { grid-area: role; } .k-login { grid-area: login; }
     .k-status { grid-area: status; } .k-aksi { grid-area: aksi; justify-content: flex-start; margin-top: 4px; }
+    .baris .k-kelas, .baris .k-hp, .baris .k-user, .baris .k-role, .baris .k-login { text-align: left; }
+    .baris .k-status { text-align: left; }
     .alat .sel { flex: 1 1 140px; }
     .judul-hal h1 { font-size: 1.4rem; }
     .atur-kendali { width: 100%; }
