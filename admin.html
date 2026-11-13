@@ -229,6 +229,13 @@
   .kepala.pg, .baris.pg { grid-template-columns: minmax(0, 2.2fr) minmax(0, 1fr) minmax(0, 1.2fr) 108px auto; }
   .kepala.pg { padding-left: 16px; }
 
+  /* ===== Halaman admin ===== */
+  .kepala.ad, .baris.ad { grid-template-columns: minmax(0, 1.8fr) minmax(0, 1.1fr) 96px minmax(0, 1.1fr) 96px auto; }
+  .kepala.ad { padding-left: 16px; }
+  .kotak-kunci { background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 20px; margin-top: 18px; max-width: 460px; }
+  .kotak-kunci h2 { margin: 0 0 14px; font-size: 1.05rem; }
+  .kotak-pass { background: var(--hijau-bg); color: var(--hijau); border-radius: 10px; padding: 12px 14px; font-family: ui-monospace, monospace; font-size: 1.05rem; letter-spacing: 1px; text-align: center; }
+
   /* ===== Kartu QR untuk dicetak ===== */
   #areaCetak { display: none; }
   .kartu { width: 90mm; height: 56mm; border: 1px solid #cfc9cb; border-radius: 3mm; overflow: hidden; display: flex; flex-direction: column; background: #fff; color: #1A1416; break-inside: avoid; page-break-inside: avoid; font-family: var(--font); }
@@ -280,6 +287,7 @@
     .baris { grid-template-columns: 32px minmax(0, 1fr) auto; grid-template-areas: "cek nama status" ". kelas kelas" ". hp hp" ". aksi aksi"; row-gap: 6px; align-items: start; }
     .baris.pg { grid-template-columns: minmax(0, 1fr) auto; grid-template-areas: "nama status" "kelas kelas" "hp hp" "aksi aksi"; }
     .baris.pg .k-cek { display: none; }
+    .baris.ad { grid-template-columns: minmax(0, 1fr) auto; grid-template-areas: "nama status" "user user" "role role" "login login" "aksi aksi"; }
     .k-cek { grid-area: cek; padding-top: 2px; } .k-nama { grid-area: nama; } .k-kelas { grid-area: kelas; } .k-hp { grid-area: hp; }
     .k-status { grid-area: status; } .k-aksi { grid-area: aksi; justify-content: flex-start; margin-top: 4px; }
     .alat .sel { flex: 1 1 140px; }
@@ -431,6 +439,28 @@
       <div class="kosong" id="kosongPengajar" hidden></div>
       <datalist id="saranJenis"></datalist>
     </div>
+
+    <div id="viewAdmin" hidden>
+      <div class="judul-hal">
+        <div><h1>Admin</h1><p class="sub" id="adminJumlah"></p></div>
+        <div class="alat-judul">
+          <button class="btn" id="btnTambahAdmin" type="button" hidden>Tambah admin</button>
+        </div>
+      </div>
+      <div class="tabel" id="tabelAdmin" hidden>
+        <div class="kepala ad"><div>Nama</div><div>Username</div><div>Peran</div><div>Login terakhir</div><div>Status</div><div></div></div>
+        <div id="barisAdmin"></div>
+      </div>
+      <div class="kosong" id="kosongAdmin" hidden></div>
+      <div class="kotak-kunci">
+        <h2>Ganti password saya</h2>
+        <div class="medan"><label for="pwLama">Password lama</label><input class="isi" id="pwLama" type="password" autocomplete="current-password"></div>
+        <div class="medan"><label for="pwBaru">Password baru</label><input class="isi" id="pwBaru" type="password" autocomplete="new-password"><p class="petunjuk">Minimal 8 karakter.</p></div>
+        <div class="medan"><label for="pwUlang">Ulangi password baru</label><input class="isi" id="pwUlang" type="password" autocomplete="new-password"></div>
+        <p class="galat-form" id="galatPw" role="alert" hidden></p>
+        <button class="btn" id="btnSimpanPw" type="button">Simpan password baru</button>
+      </div>
+    </div>
   </main>
 </div>
 
@@ -516,7 +546,8 @@ var AA = (function () {
   var $ = function (id) { return document.getElementById(id); };
   var S = { token: '', user: null, data: null, offset: 0, memuat: false, pilihan: {}, lini: null, pertama: true, gagal: false, pewaktu: 0,
             view: 'dash', menuBtn: {}, siswa: null, siswaMuat: false, cari: '', fStatus: 'AKTIF', fKelas: '', pilih: {},
-            pengajar: null, pengajarMuat: false, pCari: '', pFStatus: 'AKTIF' };
+            pengajar: null, pengajarMuat: false, pCari: '', pFStatus: 'AKTIF',
+            daftarAdmin: null, adminMuat: false };
 
   /* ---------- Alat kecil ---------- */
   function tambah(n, c) {
@@ -793,13 +824,13 @@ var AA = (function () {
   function tampilApp() {
     $('login').hidden = true; $('app').hidden = false; $('navBawah').hidden = false;
     $('akunNama').textContent = S.user.nama; $('akunPeran').textContent = S.user.role === 'SUPERADMIN' ? 'Admin utama' : 'Admin';
-    S.pertama = true; S.data = null; S.siswa = null; S.pengajar = null; S.pilihan = {}; S.pilih = {}; tickJam(); ubahView(hashAwal(), true);
+    S.pertama = true; S.data = null; S.siswa = null; S.pengajar = null; S.daftarAdmin = null; S.pilihan = {}; S.pilih = {}; tickJam(); ubahView(hashAwal(), true);
     clearInterval(S.pewaktu);
     S.pewaktu = setInterval(function () { if (!document.hidden && S.token && S.view === 'dash') muat(true); }, JEDA_PERBARUI);
   }
   function simpanSesi() { try { sessionStorage.setItem('abdi_admin', JSON.stringify({ t: S.token, u: S.user })); } catch (e) {} }
   function hapusSesi() { try { sessionStorage.removeItem('abdi_admin'); } catch (e) {} }
-  function keluarLokal(pesanGalat) { S.token = ''; S.user = null; S.data = null; S.siswa = null; S.pengajar = null; S.pilih = {}; clearInterval(S.pewaktu); hapusSesi(); tampilLogin(pesanGalat); }
+  function keluarLokal(pesanGalat) { S.token = ''; S.user = null; S.data = null; S.siswa = null; S.pengajar = null; S.daftarAdmin = null; S.pilih = {}; clearInterval(S.pewaktu); hapusSesi(); tampilLogin(pesanGalat); }
 
   async function masuk(e) {
     e.preventDefault();
@@ -1228,21 +1259,158 @@ var AA = (function () {
     var baru = (S.pengajar || []).filter(function (x) { return x.id === g.id; })[0]; if (baru) modalQRPengajar(baru);
   }
 
+  /* ====================== ADMIN (akun admin) ====================== */
+  function superAdmin() { return !!(S.user && S.user.role === 'SUPERADMIN'); }
+  async function muatAdmin(diam) {
+    if (!S.token) return;
+    if (!superAdmin()) {
+      $('btnTambahAdmin').hidden = true; $('tabelAdmin').hidden = true; $('kosongAdmin').hidden = true;
+      $('adminJumlah').textContent = 'Halaman kelola akun admin hanya untuk SUPERADMIN.';
+      return;
+    }
+    $('btnTambahAdmin').hidden = false;
+    if (S.adminMuat) return;
+    S.adminMuat = true; if (!diam) $('adminJumlah').textContent = 'Memuat data admin…';
+    var r = await adm('admin_admin_daftar');
+    S.adminMuat = false;
+    if (!r) return;
+    if (r.ok && !Array.isArray(r.admins)) r = galatLengkap(r);
+    if (!r.ok) { $('adminJumlah').textContent = 'Gagal memuat data admin.'; toast(pesan(r, 'Gagal memuat data admin.'), true); return; }
+    S.daftarAdmin = r.admins;
+    renderAdmin();
+  }
+  function renderAdmin() {
+    var daftar = S.daftarAdmin || [];
+    var aktif = daftar.filter(function (x) { return x.status === 'AKTIF'; }).length;
+    $('adminJumlah').textContent = aktif + ' aktif, ' + (daftar.length - aktif) + ' nonaktif';
+    var box = $('barisAdmin'), kosong = $('kosongAdmin');
+    box.textContent = ''; daftar.forEach(function (a) { box.appendChild(barisAdmin(a)); });
+    $('tabelAdmin').hidden = !daftar.length; kosong.hidden = !!daftar.length; kosong.textContent = '';
+    if (!daftar.length) kosong.appendChild(h('div', null, h('b', { text: 'Belum ada admin lain.' }), 'Klik Tambah admin untuk membuat akun baru.'));
+  }
+  function barisAdmin(a) {
+    var aksi = [h('button', { type: 'button', class: 'btn netral kecil', text: 'Ubah', 'aria-label': 'Ubah ' + a.username, onclick: function () { formAdmin(a); } })];
+    if (a.username !== (S.user && S.user.username)) {
+      aksi.push(h('button', { type: 'button', class: 'btn netral kecil', text: 'Reset sandi', 'aria-label': 'Reset sandi ' + a.username, onclick: function () { resetPasswordAdmin(a); } }));
+      aksi.push(h('button', { type: 'button', class: 'btn netral kecil', text: a.status === 'AKTIF' ? 'Nonaktifkan' : 'Aktifkan', onclick: function () { ubahStatusAdmin(a); } }));
+      aksi.push(h('button', { type: 'button', class: 'btn netral kecil', text: 'Hapus', 'aria-label': 'Hapus ' + a.username, onclick: function () { hapusAdmin(a); } }));
+    }
+    return h('div', { class: 'baris ad' + (a.status !== 'AKTIF' ? ' nonaktif' : '') },
+      h('div', { class: 'k-nama' }, h('div', { class: 'nm', text: a.nama }), h('div', { class: 'id', text: a.id })),
+      h('div', { class: 'k-user', text: a.username }),
+      h('div', { class: 'k-role', text: a.role === 'SUPERADMIN' ? 'Superadmin' : 'Admin' }),
+      h('div', { class: 'k-login', text: a.lastLogin || 'Belum pernah' }),
+      h('div', { class: 'k-status' }, badgeStatus(a.status)),
+      h('div', { class: 'k-aksi' }, aksi));
+  }
+  function formAdmin(a) {
+    var baru = !a;
+    var inNama = h('input', { class: 'isi', type: 'text', maxlength: '60', autocomplete: 'off' }); inNama.value = baru ? '' : a.nama;
+    var inUser = h('input', { class: 'isi', type: 'text', maxlength: '30', autocomplete: 'off', autocapitalize: 'none' }); inUser.value = baru ? '' : a.username;
+    var selRole = h('select', { class: 'sel' }, h('option', { value: 'ADMIN', text: 'Admin (biasa)' }), h('option', { value: 'SUPERADMIN', text: 'Superadmin (bisa kelola akun admin)' }));
+    selRole.value = baru ? 'ADMIN' : a.role;
+    var inSandi = h('input', { class: 'isi', type: 'password', maxlength: '60', autocomplete: 'new-password' });
+    var galat = h('p', { class: 'galat-form', role: 'alert', hidden: true });
+    var medan = function (label, el, petunjuk) { return h('div', { class: 'medan' }, h('label', { text: label }), el, petunjuk ? h('p', { class: 'petunjuk', text: petunjuk }) : null); };
+    var isi = h('div', null, galat,
+      medan('Nama lengkap', inNama),
+      medan('Username', inUser, baru ? 'Huruf kecil, 3-30 karakter, diawali huruf (boleh angka, titik, garis bawah, strip)' : 'Username tidak bisa diubah'),
+      medan('Peran', selRole, 'Admin biasa tidak bisa melihat halaman ini.'),
+      medan(baru ? 'Password awal' : 'Password baru (opsional)', inSandi, baru ? 'Minimal 8 karakter. Beritahu ke yang bersangkutan lewat jalur aman.' : 'Kosongkan jika tidak ingin mengganti password admin ini.'));
+    var tombol = [
+      { teks: 'Batal', kelas: 'netral', klik: function (tutup) { tutup(); } },
+      { teks: baru ? 'Buat akun' : 'Simpan', klik: function (tutup, btn) { simpanAdmin(a, { nama: inNama, user: inUser, role: selRole, sandi: inSandi, galat: galat }, tutup, btn); } }
+    ];
+    modal(baru ? 'Tambah admin' : 'Ubah data admin', isi, tombol);
+    inNama.focus();
+  }
+  async function simpanAdmin(a, f, tutup, tombol) {
+    var params = { nama: f.nama.value.trim(), role: f.role.value };
+    if (!a) {
+      params.username = f.user.value.trim().toLowerCase();
+      params.password = f.sandi.value;
+    } else if (f.sandi.value) {
+      params.password = f.sandi.value;
+    }
+    var salah = function (t) { f.galat.textContent = t; f.galat.hidden = false; tombol.disabled = false; };
+    if (params.nama.length < 2) { salah('Nama wajib diisi (minimal 2 huruf).'); f.nama.focus(); return; }
+    if (!a) {
+      if (!/^[a-z][a-z0-9._-]{2,29}$/.test(params.username)) { salah('Username harus 3-30 karakter, diawali huruf kecil (boleh angka, titik, garis bawah, strip).'); f.user.focus(); return; }
+      if (params.password.length < 8) { salah('Password minimal 8 karakter.'); f.sandi.focus(); return; }
+    } else if (params.password && params.password.length < 8) { salah('Password baru minimal 8 karakter.'); f.sandi.focus(); return; }
+    tombol.disabled = true; f.galat.hidden = true;
+    if (a) params.id = a.id;
+    var r = await adm('admin_admin_simpan', params);
+    if (!r) return;
+    if (r.ok && !r.id) r = galatLengkap(r);
+    if (!r.ok) { salah(pesan(r, 'Gagal menyimpan.')); return; }
+    tutup(); toast(r.pesan || (a ? 'Data admin diperbarui.' : 'Admin baru dibuat.'));
+    muatAdmin(true);
+  }
+  async function ubahStatusAdmin(a) {
+    var ke = a.status === 'AKTIF' ? 'NONAKTIF' : 'AKTIF';
+    if (ke === 'NONAKTIF') {
+      var ya = await tanya('Nonaktifkan ' + a.username + '?', 'Akun ini tidak akan bisa login sampai diaktifkan kembali.', 'Nonaktifkan');
+      if (!ya) return;
+    }
+    var r = await adm('admin_admin_status', { id: a.id, status: ke }); if (!r) return;
+    if (r.ok && !r.id) r = galatLengkap(r);
+    if (!r.ok) { toast(pesan(r, 'Gagal mengubah status.'), true); return; }
+    toast(r.pesan || 'Status admin diubah.'); muatAdmin(true);
+  }
+  async function hapusAdmin(a) {
+    var ya = await tanya('Hapus akun ' + a.username + '?', 'Akun dihapus permanen dan tidak bisa login lagi.', 'Hapus');
+    if (!ya) return;
+    var r = await adm('admin_admin_hapus', { id: a.id }); if (!r) return;
+    if (r.ok && !r.id) r = galatLengkap(r);
+    if (!r.ok) { toast(pesan(r, 'Gagal menghapus.'), true); return; }
+    toast('Akun admin dihapus.'); muatAdmin(true);
+  }
+  async function resetPasswordAdmin(a) {
+    var ya = await tanya('Reset password ' + a.username + '?', 'Sistem akan membuat password acak yang baru. Password lama tidak berlaku lagi.', 'Reset password');
+    if (!ya) return;
+    var r = await adm('admin_admin_reset', { id: a.id }); if (!r) return;
+    if (r.ok && !r.passwordBaru) r = galatLengkap(r);
+    if (!r.ok) { toast(pesan(r, 'Gagal reset password.'), true); return; }
+    modal('Password baru ' + a.username, h('div', null,
+      h('p', { text: 'Password baru untuk ' + a.nama + ' (' + a.username + '):' }),
+      h('div', { class: 'kotak-pass', text: r.passwordBaru }),
+      h('p', { class: 'petunjuk', text: 'Tampilkan atau kirim password ini sekarang. Setelah dialog ini ditutup, password tidak bisa dilihat lagi.' })),
+      [{ teks: 'Salin', kelas: 'netral', klik: function () { try { navigator.clipboard.writeText(r.passwordBaru); toast('Password disalin.'); } catch (e) { toast('Gagal menyalin, salin manual.', true); } } },
+       { teks: 'Selesai', klik: function (tutup) { tutup(); muatAdmin(true); } }]);
+    muatAdmin(true);
+  }
+  async function gantiPasswordSendiri() {
+    var lama = $('pwLama').value, baru = $('pwBaru').value, ulang = $('pwUlang').value;
+    var galat = $('galatPw');
+    var salah = function (t) { galat.textContent = t; galat.hidden = false; $('btnSimpanPw').disabled = false; };
+    if (!lama) { salah('Isi password lama dulu.'); $('pwLama').focus(); return; }
+    if (baru.length < 8) { salah('Password baru minimal 8 karakter.'); $('pwBaru').focus(); return; }
+    if (baru !== ulang) { salah('Password baru dan pengulangannya tidak sama.'); $('pwUlang').focus(); return; }
+    $('btnSimpanPw').disabled = true; galat.hidden = true;
+    var r = await adm('admin_password', { lama: lama, baru: baru });
+    if (!r) { $('btnSimpanPw').disabled = false; return; }
+    if (!r.ok) { salah(pesan(r, 'Gagal mengganti password.')); return; }
+    $('pwLama').value = ''; $('pwBaru').value = ''; $('pwUlang').value = '';
+    $('btnSimpanPw').disabled = false;
+    toast(r.pesan || 'Password berhasil diganti.');
+  }
+
   /* ---------- Pindah halaman ---------- */
-  function hashAwal() { try { return location.hash === '#siswa' ? 'siswa' : location.hash === '#pengajar' ? 'pengajar' : 'dash'; } catch (e) { return 'dash'; } }
+  function hashAwal() { try { return location.hash === '#siswa' ? 'siswa' : location.hash === '#pengajar' ? 'pengajar' : location.hash === '#admin' ? 'admin' : 'dash'; } catch (e) { return 'dash'; } }
   function ubahView(nama, awal) {
-    S.view = nama === 'siswa' ? 'siswa' : nama === 'pengajar' ? 'pengajar' : 'dash';
-    $('viewDash').hidden = S.view !== 'dash'; $('viewSiswa').hidden = S.view !== 'siswa'; $('viewPengajar').hidden = S.view !== 'pengajar';
+    S.view = nama === 'siswa' ? 'siswa' : nama === 'pengajar' ? 'pengajar' : nama === 'admin' ? 'admin' : 'dash';
+    $('viewDash').hidden = S.view !== 'dash'; $('viewSiswa').hidden = S.view !== 'siswa'; $('viewPengajar').hidden = S.view !== 'pengajar'; $('viewAdmin').hidden = S.view !== 'admin';
     Object.keys(S.menuBtn).forEach(function (k) {
       S.menuBtn[k].forEach(function (b) { if (k === S.view) b.setAttribute('aria-current', 'page'); else b.removeAttribute('aria-current'); });
     });
     try { history.replaceState(null, '', S.view === 'dash' ? location.pathname + location.search : '#' + S.view); } catch (e) {}
     try { window.scrollTo(0, 0); } catch (e) {}
-    if (S.view === 'dash') muat(!!S.data); else if (S.view === 'siswa') muatSiswa(!!S.siswa); else muatPengajar(!!S.pengajar);
+    if (S.view === 'dash') muat(!!S.data); else if (S.view === 'siswa') muatSiswa(!!S.siswa); else if (S.view === 'pengajar') muatPengajar(!!S.pengajar); else muatAdmin(!!S.daftarAdmin);
   }
 
   /* ---------- Menu ---------- */
-  var MENU = [['dash', 'Dashboard', true], ['siswa', 'Siswa', true], ['pengajar', 'Pengajar', true], ['admin', 'Admin', false], ['atur', 'Pengaturan', false]];
+  var MENU = [['dash', 'Dashboard', true], ['siswa', 'Siswa', true], ['pengajar', 'Pengajar', true], ['admin', 'Admin', true], ['atur', 'Pengaturan', false]];
   function bangunMenu() {
     var samping = $('navSamping'), bawah = $('navBawah'); S.menuBtn = {};
     MENU.forEach(function (m) {
@@ -1285,6 +1453,8 @@ var AA = (function () {
       if (daftar.length > 60 && !(await tanya('Cetak ' + daftar.length + ' kartu?', 'Satu halaman A4 memuat 8 kartu, jadi ini sekitar ' + Math.ceil(daftar.length / 8) + ' halaman.', 'Lanjut cetak'))) return;
       cetakKartu(daftar, 'Kartu absensi pengajar');
     });
+    $('btnTambahAdmin').addEventListener('click', function () { formAdmin(null); });
+    $('btnSimpanPw').addEventListener('click', gantiPasswordSendiri);
     $('btnCetak').addEventListener('click', async function () {
       var daftar = targetCetak().filter(function (x) { return x.token; });
       if (!daftar.length) { toast('Tidak ada kartu untuk dicetak.', true); return; }
