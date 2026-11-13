@@ -236,6 +236,18 @@
   .kotak-kunci h2 { margin: 0 0 14px; font-size: 1.05rem; }
   .kotak-pass { background: var(--hijau-bg); color: var(--hijau); border-radius: 10px; padding: 12px 14px; font-family: ui-monospace, monospace; font-size: 1.05rem; letter-spacing: 1px; text-align: center; }
 
+  /* ===== Halaman pengaturan ===== */
+  .atur-it { display: flex; flex-wrap: wrap; gap: 14px; padding: 15px 16px; border-top: 1px solid var(--line); align-items: flex-start; }
+  .atur-it:first-child { border-top: none; }
+  .atur-teks { flex: 1; min-width: 220px; }
+  .atur-nm { font-weight: 700; font-size: .95rem; display: flex; align-items: center; gap: 8px; }
+  .atur-ket { color: var(--muted); font-size: .85rem; margin-top: 3px; max-width: 560px; }
+  .atur-kendali { display: flex; gap: 8px; align-items: center; }
+  .atur-kendali .isi, .atur-kendali .sel { width: auto; min-width: 200px; }
+  .atur-kendali input[type=number] { min-width: 110px; }
+  .badge.merah { background: var(--merah-bg, #FBE9E9); color: var(--merah); }
+  .atur-siaga { border-left: 4px solid var(--merah); }
+
   /* ===== Kartu QR untuk dicetak ===== */
   #areaCetak { display: none; }
   .kartu { width: 90mm; height: 56mm; border: 1px solid #cfc9cb; border-radius: 3mm; overflow: hidden; display: flex; flex-direction: column; background: #fff; color: #1A1416; break-inside: avoid; page-break-inside: avoid; font-family: var(--font); }
@@ -461,6 +473,18 @@
         <button class="btn" id="btnSimpanPw" type="button">Simpan password baru</button>
       </div>
     </div>
+
+    <div id="viewAtur" hidden>
+      <div class="judul-hal">
+        <div><h1>Pengaturan</h1><p class="sub" id="aturJumlah"></p></div>
+        <div class="alat-judul">
+          <button class="btn" id="btnSimpanAtur" type="button" hidden>Simpan pengaturan</button>
+        </div>
+      </div>
+      <div class="tabel" id="tabelAtur" hidden><div id="isiAtur"></div></div>
+      <div class="kosong" id="kosongAtur" hidden></div>
+      <p class="galat-form" id="galatAtur" role="alert" hidden></p>
+    </div>
   </main>
 </div>
 
@@ -547,7 +571,7 @@ var AA = (function () {
   var S = { token: '', user: null, data: null, offset: 0, memuat: false, pilihan: {}, lini: null, pertama: true, gagal: false, pewaktu: 0,
             view: 'dash', menuBtn: {}, siswa: null, siswaMuat: false, cari: '', fStatus: 'AKTIF', fKelas: '', pilih: {},
             pengajar: null, pengajarMuat: false, pCari: '', pFStatus: 'AKTIF',
-            daftarAdmin: null, adminMuat: false };
+            daftarAdmin: null, adminMuat: false, atur: null, aturMuat: false, aturEl: {} };
 
   /* ---------- Alat kecil ---------- */
   function tambah(n, c) {
@@ -824,13 +848,13 @@ var AA = (function () {
   function tampilApp() {
     $('login').hidden = true; $('app').hidden = false; $('navBawah').hidden = false;
     $('akunNama').textContent = S.user.nama; $('akunPeran').textContent = S.user.role === 'SUPERADMIN' ? 'Admin utama' : 'Admin';
-    S.pertama = true; S.data = null; S.siswa = null; S.pengajar = null; S.daftarAdmin = null; S.pilihan = {}; S.pilih = {}; tickJam(); ubahView(hashAwal(), true);
+    S.pertama = true; S.data = null; S.siswa = null; S.pengajar = null; S.daftarAdmin = null; S.atur = null; S.pilihan = {}; S.pilih = {}; tickJam(); ubahView(hashAwal(), true);
     clearInterval(S.pewaktu);
     S.pewaktu = setInterval(function () { if (!document.hidden && S.token && S.view === 'dash') muat(true); }, JEDA_PERBARUI);
   }
   function simpanSesi() { try { sessionStorage.setItem('abdi_admin', JSON.stringify({ t: S.token, u: S.user })); } catch (e) {} }
   function hapusSesi() { try { sessionStorage.removeItem('abdi_admin'); } catch (e) {} }
-  function keluarLokal(pesanGalat) { S.token = ''; S.user = null; S.data = null; S.siswa = null; S.pengajar = null; S.daftarAdmin = null; S.pilih = {}; clearInterval(S.pewaktu); hapusSesi(); tampilLogin(pesanGalat); }
+  function keluarLokal(pesanGalat) { S.token = ''; S.user = null; S.data = null; S.siswa = null; S.pengajar = null; S.daftarAdmin = null; S.atur = null; S.pilih = {}; clearInterval(S.pewaktu); hapusSesi(); tampilLogin(pesanGalat); }
 
   async function masuk(e) {
     e.preventDefault();
@@ -1396,21 +1420,95 @@ var AA = (function () {
     toast(r.pesan || 'Password berhasil diganti.');
   }
 
+  /* ====================== PENGATURAN ====================== */
+  var LABEL_ATUR = {
+    NAMA_LEMBAGA: 'Nama lembaga',
+    TOLERANSI_AWAL_DEFAULT_MENIT: 'Absen dibuka lebih awal (menit)',
+    TOLERANSI_AKHIR_DEFAULT_MENIT: 'Batas telat (menit)',
+    MAKS_AKURASI_GPS_METER: 'Akurasi GPS maksimum (meter)',
+    LEWATI_CEK_GPS: 'Lewati cek GPS',
+    BLOKIR_PERANGKAT_SAMA: 'Blokir perangkat sama'
+  };
+  async function muatAtur(diam) {
+    if (!S.token) return;
+    if (!superAdmin()) {
+      $('btnSimpanAtur').hidden = true; $('tabelAtur').hidden = true; $('kosongAtur').hidden = false; $('kosongAtur').textContent = '';
+      $('kosongAtur').appendChild(h('div', null, h('b', { text: 'Pengaturan hanya bisa dilihat SUPERADMIN.' }), 'Minta superadmin untuk mengubah pengaturan di sini.'));
+      $('aturJumlah').textContent = '';
+      return;
+    }
+    if (S.aturMuat) return;
+    S.aturMuat = true; if (!diam) $('aturJumlah').textContent = 'Memuat pengaturan…';
+    var r = await adm('admin_atur_daftar');
+    S.aturMuat = false;
+    if (!r) return;
+    if (r.ok && !Array.isArray(r.pengaturan)) r = galatLengkap(r);
+    if (!r.ok) { $('aturJumlah').textContent = 'Gagal memuat pengaturan.'; toast(pesan(r, 'Gagal memuat pengaturan.'), true); return; }
+    S.atur = r.pengaturan; S.aturEl = {};
+    renderAtur();
+  }
+  function renderAtur() {
+    var daftar = S.atur || [];
+    $('aturJumlah').textContent = daftar.length + ' pengaturan';
+    $('btnSimpanAtur').hidden = !daftar.length;
+    var box = $('isiAtur'); box.textContent = '';
+    daftar.forEach(function (t) { box.appendChild(barisAtur(t)); });
+    $('tabelAtur').hidden = !daftar.length; $('kosongAtur').hidden = true;
+  }
+  function barisAtur(t) {
+    var el;
+    if (t.jenis === 'ya') {
+      el = h('select', { class: 'sel', 'aria-label': LABEL_ATUR[t.key] }, h('option', { value: 'TIDAK', text: 'TIDAK' }), h('option', { value: 'YA', text: 'YA' }));
+      el.value = t.nilai === 'YA' ? 'YA' : 'TIDAK';
+    } else if (t.jenis === 'angka') {
+      el = h('input', { class: 'isi', type: 'number', min: '0', max: '10000', step: '1', inputmode: 'numeric', value: t.nilai, 'aria-label': LABEL_ATUR[t.key] });
+    } else {
+      el = h('input', { class: 'isi', type: 'text', maxlength: '60', autocomplete: 'off', value: t.nilai, 'aria-label': LABEL_ATUR[t.key] });
+    }
+    S.aturEl[t.key] = el;
+    var siaga = t.jenis === 'ya' && t.nilai === 'YA';
+    return h('div', { class: 'atur-it' + (siaga ? ' atur-siaga' : '') },
+      h('div', { class: 'atur-teks' },
+        h('div', { class: 'atur-nm' }, LABEL_ATUR[t.key],
+          siaga && t.key === 'LEWATI_CEK_GPS' ? h('span', { class: 'badge merah', text: 'Mode uji coba aktif!' }) : null,
+          siaga && t.key === 'BLOKIR_PERANGKAT_SAMA' ? h('span', { class: 'badge merah', text: '1 HP = 1 siswa' }) : null),
+        h('div', { class: 'atur-ket', text: t.ket || '' })),
+      h('div', { class: 'atur-kendali' }, el));
+  }
+  async function simpanAtur() {
+    var galat = $('galatAtur'); galat.hidden = true;
+    var kunci = [], params = { daftar: '' };
+    var salah = function (t) { galat.textContent = t; galat.hidden = false; $('btnSimpanAtur').disabled = false; };
+    for (var key in S.aturEl) {
+      kunci.push(key);
+      params['set_' + key] = String(S.aturEl[key].value).trim();
+    }
+    params.daftar = kunci.join(',');
+    $('btnSimpanAtur').disabled = true;
+    var r = await adm('admin_atur_simpan', params);
+    $('btnSimpanAtur').disabled = false;
+    if (!r) return;
+    if (r.ok && !r.pesan && !r.daftar) r = galatLengkap(r);
+    if (!r.ok) { salah(pesan(r, 'Gagal menyimpan pengaturan.')); return; }
+    toast(r.pesan || 'Pengaturan disimpan.');
+    muatAtur(true);
+  }
+
   /* ---------- Pindah halaman ---------- */
-  function hashAwal() { try { return location.hash === '#siswa' ? 'siswa' : location.hash === '#pengajar' ? 'pengajar' : location.hash === '#admin' ? 'admin' : 'dash'; } catch (e) { return 'dash'; } }
+  function hashAwal() { try { return location.hash === '#siswa' ? 'siswa' : location.hash === '#pengajar' ? 'pengajar' : location.hash === '#admin' ? 'admin' : location.hash === '#atur' ? 'atur' : 'dash'; } catch (e) { return 'dash'; } }
   function ubahView(nama, awal) {
-    S.view = nama === 'siswa' ? 'siswa' : nama === 'pengajar' ? 'pengajar' : nama === 'admin' ? 'admin' : 'dash';
-    $('viewDash').hidden = S.view !== 'dash'; $('viewSiswa').hidden = S.view !== 'siswa'; $('viewPengajar').hidden = S.view !== 'pengajar'; $('viewAdmin').hidden = S.view !== 'admin';
+    S.view = nama === 'siswa' ? 'siswa' : nama === 'pengajar' ? 'pengajar' : nama === 'admin' ? 'admin' : nama === 'atur' ? 'atur' : 'dash';
+    $('viewDash').hidden = S.view !== 'dash'; $('viewSiswa').hidden = S.view !== 'siswa'; $('viewPengajar').hidden = S.view !== 'pengajar'; $('viewAdmin').hidden = S.view !== 'admin'; $('viewAtur').hidden = S.view !== 'atur';
     Object.keys(S.menuBtn).forEach(function (k) {
       S.menuBtn[k].forEach(function (b) { if (k === S.view) b.setAttribute('aria-current', 'page'); else b.removeAttribute('aria-current'); });
     });
     try { history.replaceState(null, '', S.view === 'dash' ? location.pathname + location.search : '#' + S.view); } catch (e) {}
     try { window.scrollTo(0, 0); } catch (e) {}
-    if (S.view === 'dash') muat(!!S.data); else if (S.view === 'siswa') muatSiswa(!!S.siswa); else if (S.view === 'pengajar') muatPengajar(!!S.pengajar); else muatAdmin(!!S.daftarAdmin);
+    if (S.view === 'dash') muat(!!S.data); else if (S.view === 'siswa') muatSiswa(!!S.siswa); else if (S.view === 'pengajar') muatPengajar(!!S.pengajar); else if (S.view === 'admin') muatAdmin(!!S.daftarAdmin); else muatAtur(!!S.atur);
   }
 
   /* ---------- Menu ---------- */
-  var MENU = [['dash', 'Dashboard', true], ['siswa', 'Siswa', true], ['pengajar', 'Pengajar', true], ['admin', 'Admin', true], ['atur', 'Pengaturan', false]];
+  var MENU = [['dash', 'Dashboard', true], ['siswa', 'Siswa', true], ['pengajar', 'Pengajar', true], ['admin', 'Admin', true], ['atur', 'Pengaturan', true]];
   function bangunMenu() {
     var samping = $('navSamping'), bawah = $('navBawah'); S.menuBtn = {};
     MENU.forEach(function (m) {
@@ -1455,6 +1553,7 @@ var AA = (function () {
     });
     $('btnTambahAdmin').addEventListener('click', function () { formAdmin(null); });
     $('btnSimpanPw').addEventListener('click', gantiPasswordSendiri);
+    $('btnSimpanAtur').addEventListener('click', simpanAtur);
     $('btnCetak').addEventListener('click', async function () {
       var daftar = targetCetak().filter(function (x) { return x.token; });
       if (!daftar.length) { toast('Tidak ada kartu untuk dicetak.', true); return; }
