@@ -199,7 +199,7 @@
   .badge.hijau .titik.hidup { animation: denyut 1.6s ease-in-out infinite; }
   @keyframes denyut { 50% { opacity: .3; } }
   .bar { display: flex; height: 8px; border-radius: 99px; overflow: hidden; background: var(--abu-bg); }
-  .seg.hijau { background: var(--hijau); } .seg.kuning { background: #D69A1B; } .seg.abu { background: var(--abu); }
+  .seg.hijau { background: var(--hijau); } .seg.kuning { background: #D69A1B; } .seg.abu { background: var(--abu); } .seg.merah { background: var(--aksen); }
   .hitung { display: flex; flex-wrap: wrap; gap: 4px 18px; margin: 10px 0 0; font-size: .86rem; }
   .hitung span { display: inline-flex; align-items: center; gap: 6px; }
   .hitung b { font-weight: 800; font-variant-numeric: tabular-nums; }
@@ -316,6 +316,7 @@
   .tabel-lapor td.lpor-h { color: var(--hijau); font-weight: 800; }
   .tabel-lapor td.lpor-t { color: var(--kuning); font-weight: 800; }
   .tabel-lapor td.lpor-is { color: var(--biru); font-weight: 800; }
+  .tabel-lapor td.lpor-a { color: var(--aksen); font-weight: 800; }
   .tabel-lapor td.lpor-sum { font-weight: 800; font-variant-numeric: tabular-nums; }
   .tabel-lapor tr:hover td { background: var(--soft); }
   .tabel-lapor tr:hover td.lpor-nama { background: var(--card); }
@@ -406,10 +407,10 @@
   <div class="login-band">
     <div class="merek"><img class="logo-putih" src="logo.png" alt="Abdi Academy" onerror="this.replaceWith(Object.assign(document.createElement('span'),{className:'lencana',textContent:'AA'}))"></div>
     <div>
-      <h1>ABDI ACADEMY ATTENDANCE MANAGEMENT SYSTEM.</h1>
-      <p>Real-Time Geofenced Tracking & Verification Framework.</p>
+      <h1>Pantau kehadiran hari ini dari satu layar.</h1>
+      <p>Buka dan tutup sesi, lihat siapa yang sudah absen, dan kelola data siswa serta pengajar.</p>
     </div>
-    <div class="versi" style="color:rgba(255,255,255,.6)">© 2026 Abdi Academy. All rights reserved.</div>
+    <div class="versi" style="color:rgba(255,255,255,.6)">Dashboard admin v2.1</div>
   </div>
   <div class="login-form">
     <form id="formMasuk" autocomplete="on">
@@ -837,7 +838,7 @@ var AA = (function () {
   /* ---------- Kartu sesi ---------- */
   function kartuSesi(d, it) {
     var j = it.j, s = it.s, st = s ? (s.status === 'DIBUKA' ? 'buka' : 'tutup') : 'belum';
-    var hadir = s ? s.siswaHadir : 0, telat = s ? s.siswaTerlambat : 0, izin = s ? s.siswaIzinSakit : 0, peng = s ? s.pengajarHadir : 0, total = hadir + telat + izin;
+    var hadir = s ? s.siswaHadir : 0, telat = s ? s.siswaTerlambat : 0, izin = s ? s.siswaIzinSakit : 0, alfa = s ? (s.siswaAlfa || 0) : 0, peng = s ? s.pengajarHadir : 0, total = hadir + telat + izin + alfa;
     var persen = function (n) { return total ? (n / total * 100) : 0; };
 
     var badge = st === 'buka' ? h('span', { class: 'badge hijau' }, h('span', { class: 'titik hidup' }), 'Sedang dibuka')
@@ -863,14 +864,16 @@ var AA = (function () {
         st === 'buka' || (st === 'tutup' && s.lokasi) ? h('span', null, ikon('pin', 15), s.lokasi || s.idLokasi) : null,
         s && s.jamBuka ? h('span', { text: 'Dibuka ' + s.jamBuka + (s.jamTutup ? ', ditutup ' + s.jamTutup : '') }) : null),
       s ? h('div', null,
-        h('div', { class: 'bar', role: 'img', 'aria-label': hadir + ' hadir, ' + telat + ' terlambat' },
-          total ? [h('span', { class: 'seg hijau', style: 'width:' + persen(hadir) + '%' }), h('span', { class: 'seg kuning', style: 'width:' + persen(telat) + '%' }), izin ? h('span', { class: 'seg abu', style: 'width:' + persen(izin) + '%' }) : null] : null),
+        h('div', { class: 'bar', role: 'img', 'aria-label': hadir + ' hadir, ' + telat + ' terlambat, ' + alfa + ' alfa' },
+          total ? [h('span', { class: 'seg hijau', style: 'width:' + persen(hadir) + '%' }), h('span', { class: 'seg kuning', style: 'width:' + persen(telat) + '%' }), izin ? h('span', { class: 'seg abu', style: 'width:' + persen(izin) + '%' }) : null, alfa ? h('span', { class: 'seg merah', style: 'width:' + persen(alfa) + '%' }) : null] : null),
         h('div', { class: 'hitung' },
           h('span', null, h('i', { style: 'background:var(--hijau)' }), h('b', { text: hadir }), ' hadir'),
-          h('span', null, h('i', { style: 'background:#D69A1B' }), h('b', { text: telat }), ' terlambat'),
-          izin ? h('span', null, h('i', { style: 'background:var(--abu)' }), h('b', { text: izin }), ' izin atau sakit') : null,
+          h('span', null, h('i', { style: 'background:#D69A1B' }), h('b', { text: telat }), ' telat'),
+          izin ? h('span', null, h('i', { style: 'background:var(--biru)' }), h('b', { text: izin }), ' izin') : null,
+          alfa ? h('span', null, h('i', { style: 'background:var(--aksen)' }), h('b', { text: alfa }), ' alfa') : null,
           h('span', null, h('i', { style: 'background:var(--marun)' }), h('b', { text: peng }), ' pengajar'))) : null,
-      h('div', { class: 'aksi' }, sel, tombol));
+      h('div', { class: 'aksi' }, sel, tombol,
+        s && (alfa > 0 || (s.izinSiswa && s.izinSiswa.length)) ? h('button', { class: 'btn garis', type: 'button', onclick: function () { modalIzin(s, j); } }, 'Izin / Alfa…') : null));
   }
   function renderSesi(d, items) {
     var box = $('daftarSesi'); box.textContent = '';
@@ -890,13 +893,63 @@ var AA = (function () {
     }
     d.terbaru.forEach(function (t) {
       var tepat = t.status === 'HADIR', telat = t.status === 'TERLAMBAT';
-      var ket = t.peran === 'Pengajar' ? (t.catatan ? 'Materi: ' + t.catatan : '') : (t.jarak !== '' && !isNaN(Number(t.jarak)) ? Math.round(Number(t.jarak)) + ' m dari lokasi' : '');
+      var izin = t.status === 'IZIN' || t.status === 'SAKIT';
+      var kelasB = tepat ? 'hijau' : telat ? 'kuning' : izin ? 'biru' : t.status === 'ALFA' ? 'merah' : 'abu';
+      var ket = izin && t.catatan ? t.catatan
+        : t.peran === 'Pengajar' ? (t.catatan ? 'Materi: ' + t.catatan : '')
+        : (t.jarak !== '' && !isNaN(Number(t.jarak)) ? Math.round(Number(t.jarak)) + ' m dari lokasi' : '');
       ul.appendChild(h('li', null,
         h('div', { class: 'avatar' + (t.peran === 'Pengajar' ? ' pengajar' : ''), text: AA.inisial(t.nama), 'aria-hidden': 'true' }),
         h('div', { class: 'isi-u' }, h('div', { class: 'nm', text: t.nama }), h('div', { class: 'sb', text: t.peran + ' di ' + (t.kegiatan || 'sesi') }), ket ? h('div', { class: 'sb', text: ket }) : null),
         h('div', { class: 'kn' }, h('span', { class: 'wk', text: t.jam.slice(0, 5) }),
-          h('span', { class: 'badge ' + (tepat ? 'hijau' : telat ? 'kuning' : 'abu'), text: AA.kapital(t.status) }))));
+          h('span', { class: 'badge ' + kelasB, text: AA.kapital(t.status) }))));
     });
+  }
+
+  /* ---------- Izin & Alfa pada kartu sesi ---------- */
+  function modalIzin(s, j) {
+    var alfa = s.alfaSiswa || [], izin = s.izinSiswa || [];
+    var pilihSiswa = h('select', { class: 'sel', 'aria-label': 'Siswa alfa' });
+    if (alfa.length) {
+      alfa.forEach(function (x) { pilihSiswa.appendChild(h('option', { value: x.id, text: x.nama + (x.kelas ? ' (' + x.kelas + ')' : '') })); });
+    } else {
+      pilihSiswa.appendChild(h('option', { value: '', text: 'Tidak ada siswa alfa di sesi ini' }));
+    }
+    var inAlasan = h('input', { class: 'isi', type: 'text', maxlength: '120', autocomplete: 'off', placeholder: 'Contoh: sakit demam, ada acara keluarga' });
+    var galat = h('p', { class: 'galat-form', role: 'alert', hidden: true });
+    var m = null;
+    var isi = h('div', null, galat,
+      h('p', { class: 'petunjuk', text: 'Siswa yang tidak absen sampai kelas berakhir otomatis dihitung ALFA. Pilih siswa lalu tulis alasannya untuk mengubahnya menjadi IZIN.' }),
+      h('div', { class: 'medan' }, h('label', { text: 'Siswa alfa' }), pilihSiswa),
+      h('div', { class: 'medan' }, h('label', { text: 'Alasan izin' }), inAlasan),
+      izin.length ? h('div', { class: 'medan' }, h('label', { text: 'Izin yang sudah tercatat' }),
+        izin.map(function (x) {
+          return h('div', { class: 'atur-it', style: 'padding:8px 0;border-top:1px solid var(--line)' },
+            h('div', { class: 'atur-teks' }, h('div', { class: 'atur-nm', text: x.nama }), h('div', { class: 'atur-ket', text: x.catatan || 'Izin' })),
+            h('div', { class: 'atur-kendali' }, h('button', { class: 'btn netral kecil', type: 'button', onclick: async function () {
+              var ya = await tanya('Batalkan izin ' + x.nama + '?', 'Siswa kembali dihitung ALFA bila sesi sudah berakhir.', 'Batalkan izin');
+              if (!ya) return;
+              var r = await adm('admin_izin_batal', { idSesi: s.idSesi, idSiswa: x.id });
+              if (!r) return;
+              if (r.ok && !r.id) r = galatLengkap(r);
+              if (!r.ok) { toast(pesan(r, 'Gagal membatalkan izin.'), true); return; }
+              if (m) m.tutup();
+              toast(r.pesan || 'Izin dibatalkan.'); muat(true);
+            } }, 'Batalkan')));
+        })) : null);
+    m = modal('Izin & Alfa — ' + (j ? j.kegiatan : ''), isi, [
+      { teks: 'Tutup', kelas: 'netral', klik: function (tutup) { tutup(); } },
+      { teks: 'Tandai izin', klik: async function (tutup, btn) {
+          var alasan = inAlasan.value.trim();
+          if (alasan.length < 3) { galat.textContent = 'Tulis alasan izin (minimal 3 huruf).'; galat.hidden = false; inAlasan.focus(); return; }
+          if (!pilihSiswa.value) { galat.textContent = 'Tidak ada siswa alfa yang bisa ditandai.'; galat.hidden = false; return; }
+          btn.disabled = true; galat.hidden = true;
+          var r = await adm('admin_izin_set', { idSesi: s.idSesi, idSiswa: pilihSiswa.value, alasan: alasan });
+          if (!r) { btn.disabled = false; return; }
+          if (r.ok && !r.id) r = galatLengkap(r);
+          if (!r.ok) { galat.textContent = pesan(r, 'Gagal menyimpan izin.'); galat.hidden = false; btn.disabled = false; return; }
+          tutup(); toast(r.pesan || 'Izin disimpan.'); muat(true);
+        } }]);
   }
 
   /* ---------- Render & muat ---------- */
@@ -1621,7 +1674,7 @@ var AA = (function () {
     LAPOR.data = r;
     renderLaporan(r);
   }
-  function selKelasLapor(k) { return k === 'H' ? 'lpor-h' : k === 'T' ? 'lpor-t' : k === 'I' || k === 'S' ? 'lpor-is' : ''; }
+  function selKelasLapor(k) { return k === 'H' ? 'lpor-h' : k === 'T' ? 'lpor-t' : k === 'I' || k === 'S' ? 'lpor-is' : k === 'A' ? 'lpor-a' : ''; }
   function renderLaporan(r) {
     var wrap = $('tabelLapor'), kosong = $('kosongLapor');
     wrap.textContent = ''; wrap.hidden = true; kosong.hidden = true; kosong.textContent = '';
@@ -1632,9 +1685,9 @@ var AA = (function () {
       $('laporSub').textContent = 'Belum ada data pada bulan ini.';
       return;
     }
-    var jumlah = r.baris.reduce(function (t, b) { t.h += b.hadir; t.t += b.telat; return t; }, { h: 0, t: 0 });
+    var jumlah = r.baris.reduce(function (t, b) { t.h += b.hadir; t.t += b.telat; t.i += (b.izin || 0); t.a += (b.alfa || 0); return t; }, { h: 0, t: 0, i: 0, a: 0 });
     var namaBulan = ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'][r.bulan - 1];
-    $('laporSub').textContent = (r.sumber === 'siswa' ? 'Siswa' : 'Pengajar') + ' · ' + namaBulan + ' ' + r.tahun + ' · ' + r.baris.length + ' orang · ' + jumlah.h + ' hadir, ' + jumlah.t + ' telat';
+    $('laporSub').textContent = (r.sumber === 'siswa' ? 'Siswa' : 'Pengajar') + ' · ' + namaBulan + ' ' + r.tahun + ' · ' + r.baris.length + ' orang · ' + jumlah.h + ' hadir, ' + jumlah.t + ' telat, ' + jumlah.i + ' izin, ' + jumlah.a + ' alfa';
 
     var tb = h('table', { class: 'tabel-lapor' });
     var trK = h('tr');
@@ -1643,6 +1696,8 @@ var AA = (function () {
     for (var d = 1; d <= r.jmlHari; d++) trK.appendChild(h('th', { text: String(d) }));
     trK.appendChild(h('th', { text: 'Hadir' }));
     trK.appendChild(h('th', { text: 'Telat' }));
+    trK.appendChild(h('th', { text: 'Izin' }));
+    trK.appendChild(h('th', { text: 'Alfa' }));
     var thead = h('thead'); thead.appendChild(trK); tb.appendChild(thead);
     var tbody = h('tbody');
     r.baris.forEach(function (b) {
@@ -1652,6 +1707,8 @@ var AA = (function () {
       b.sel.forEach(function (k) { tr.appendChild(h('td', { class: selKelasLapor(k), text: k })); });
       tr.appendChild(h('td', { class: 'lpor-sum lpor-h', text: String(b.hadir) }));
       tr.appendChild(h('td', { class: 'lpor-sum lpor-t', text: String(b.telat) }));
+      tr.appendChild(h('td', { class: 'lpor-sum lpor-is', text: String(b.izin || 0) }));
+      tr.appendChild(h('td', { class: 'lpor-sum lpor-a', text: String(b.alfa || 0) }));
       tbody.appendChild(tr);
     });
     tb.appendChild(tbody);
@@ -1671,15 +1728,15 @@ var AA = (function () {
       'Periode: ' + ('0' + r.bulan).slice(-2) + '/' + r.tahun];
     var head = ['ID', 'Nama', r.sumber === 'siswa' ? 'Kelas' : 'Jenis'];
     for (var d = 1; d <= r.jmlHari; d++) head.push(String(d));
-    head.push('Hadir', 'Telat');
+    head.push('Hadir', 'Telat', 'Izin', 'Alfa');
     barisCsv.push(head.join(';'));
     r.baris.forEach(function (b) {
       var row = [b.id, aman(b.nama), aman(b.kelas)];
       b.sel.forEach(function (k) { row.push(k); });
-      row.push(String(b.hadir), String(b.telat));
+      row.push(String(b.hadir), String(b.telat), String(b.izin || 0), String(b.alfa || 0));
       barisCsv.push(row.join(';'));
     });
-    barisCsv.push('', 'Keterangan: H = Hadir (tepat), T = Terlambat, I = Izin, S = Sakit, - = Tidak absen');
+    barisCsv.push('', 'Keterangan: H = Hadir (tepat), T = Terlambat, I = Izin, S = Sakit, A = Alfa (tidak absen tanpa keterangan), - = Tidak ada sesi');
     var blob = new Blob([BOM + barisCsv.join(NL)], { type: 'text/csv;charset=utf-8' });
     var url = URL.createObjectURL(blob);
     var a = document.createElement('a');
